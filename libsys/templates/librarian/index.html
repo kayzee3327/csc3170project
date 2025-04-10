@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Library Management System</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7"
+            crossorigin="anonymous"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+        />
+        <link
+            rel="stylesheet"
+            href=" {{ url_for('static', filename='css/admin.css') }} "
+        />
+    </head>
+    <body class="bg-warning-subtle">
+        <nav class="navbar navbar-expand-lg bg-warning">
+            <div class="container-fluid">
+                <a href="{{ url_for('librarian.index') }}" class="navbar-brand fs-2">
+                    <img
+                        src="{{ url_for('static', filename='img/CUSZ-03logo.png') }}"
+                        alt="logo"
+                        class="d-inline-block"
+                        width="50"
+                    />
+                    Library
+                </a>
+                <ul>
+                    <li>
+                        <a class="navbar-brand fs-6 me-2"
+                            >Welcome Librarian! {{ g.user['fullname'] }}</a
+                        >
+                    </li>
+                    <li>
+                        <a
+                            class="btn btn-outline-dark"
+                            href="{{ url_for('auth.logout') }}"
+                        >
+                            Log out
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="content-wrapper">
+            <div class="container">
+                <div class="row justify-content-center g-4 mb-4">
+                    <div class="col-12 col-sm-6 col-lg-5 col-xl-4">
+                        <a href="{{ url_for('librarian.catalog') }}" class="btn btn-primary d-block custom-btn">
+                            <h2>UPDATE CATALOGS</h2>
+                        </a>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-lg-5 col-xl-4">
+                        <a href="{{ url_for('librarian.inventory') }}" class="btn btn-success d-block custom-btn">
+                            <h2>INVENTORY</h2>
+                        </a>
+                    </div>
+                </div>
+                <div class="row justify-content-center g-4">
+                    <div class="col-12 col-sm-6 col-lg-5 col-xl-4">
+                        <a href="{{ url_for('librarian.usage') }}" class="btn btn-warning d-block custom-btn">
+                            <h2>USAGE REPORT</h2>
+                        </a>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-lg-5 col-xl-4">
+                        <a href="{{ url_for('librarian.complaints') }}" class="btn btn-danger d-block custom-btn">
+                            <h2>REPLY TO COMPLAINTS</h2>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq"
+            crossorigin="anonymous"
+        ></script>
+    </body>
+</html>

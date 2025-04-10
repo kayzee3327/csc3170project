@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Library Management System</title>
+        <!-- Bootstrap 5 CSS 文件 -->
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7"
+            crossorigin="anonymous"
+        />
+        <!-- Bootstrap 图标库（用于搜索图标） -->
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+        />
+        <link
+            rel="stylesheet"
+            href=" {{ url_for('static', filename='css/style.css') }} "
+        />
+        <link
+            rel="stylesheet"
+            href=" {{ url_for('static', filename='css/patron.css') }} "
+        />
+    </head>
+    <body class="custom-bg">
+        <nav class="navbar navbar-expand-lg bg-warning">
+            <div class="container-fluid">
+                <a href="{{ url_for('index') }}" class="navbar-brand fs-2">
+                    <img
+                        src="{{ url_for('static', filename='img/CUSZ-03logo.png') }}"
+                        alt="logo"
+                        class="d-inline-block"
+                        width="50"
+                    />
+                    Library
+                </a>
+                <ul>
+                    {% if g.user %}
+                    <li>
+                        <div class="navbar-brand fs-6 me-2">
+                            Welcome! {{ g.user['fullname'] }}
+                        </div>
+                    </li>
+                    {% endif %}
+                    <li>
+                        <a class="btn btn-outline-dark" href="{{ url_for('auth.logout') }}"> 
+                            Log out
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="content-wrapper" style="justify-content: center">
+            <div class="result-card container">
+                <div class="search-body">
+                    <div class="mb-4 justify-content-between d-flex">
+                        <h1>SEARCH RESULT</h1>
+                        <button type="button" class="btn btn-outline-dark"><i class="bi bi-arrow-left me-1 ms-1"></i></button>
+                    </div>
+                    <!-- 图书列表容器 -->
+                    <div class="container">
+                        {% for book in books %}
+                        <!-- 图书项目 -->
+                        <div class="border-top pt-3 position-relative">
+                            <a href="#" class="navbar-brand text-secondary-emphasis fs-2">{{ book['title'] }}</a>
+                            <p class="text-muted">Author：{{ book['author'] }}</p>
+                            <p class="text-muted">Published Year：{{ book['year'] }}</p>
+                            <p class="text-muted">ISBN：{{ book['isbn'] }}</p>
+                            <p class="text-muted">Copies：{{ book['copies'] }} </p>
+                            <button type="button" class="btn btn-primary position-absolute end-0 bottom-0">Borrow</button>
+                        </div>
+                        {% endfor %}
+                        {% if not books %}
+                        <h3 class="border-top pt-3 text-body-tertiary">No Result</h3>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq"
+            crossorigin="anonymous"
+        ></script>
+    </body>
+</html>

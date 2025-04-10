@@ -22,7 +22,10 @@
     <body class="bg-warning-subtle">
         <nav class="navbar navbar-expand-lg bg-warning">
             <div class="container-fluid">
-                <a href="{{ url_for('librarian.index') }}" class="navbar-brand fs-2">
+                <a
+                    href="{{ url_for('librarian.index') }}"
+                    class="navbar-brand fs-2"
+                >
                     <img
                         src="{{ url_for('static', filename='img/CUSZ-03logo.png') }}"
                         alt="logo"
@@ -40,7 +43,10 @@
                     </li>
                     {% endif %}
                     <li>
-                        <a class="btn btn-outline-dark" href="{{ url_for('auth.logout') }}"> 
+                        <a
+                            class="btn btn-outline-dark"
+                            href="{{ url_for('auth.logout') }}"
+                        >
                             Log out
                         </a>
                     </li>
@@ -53,32 +59,32 @@
                 <div class="login-body">
                     <div class="mb-4 justify-content-between d-flex">
                         <h1>REPLY</h1>
-                        <button type="button" class="btn btn-outline-dark">
-                            <i class="bi bi-arrow-left me-1 ms-1"></i>
-                        </button>
+                        <a class="btn" href="{{ url_for('librarian.index') }}">
+                            <i class="bi bi-arrow-90deg-left fs-3"></i>
+                        </a>
                     </div>
 
                     <div class="container">
                         <h3>{{ complaint['title'] }}</h3>
-                        <h5>
-                            {{ complaint['content'] }}
-                        </h5>
+                        <h5>{{ complaint['content'] }}</h5>
                     </div>
-
-                    <div class="mb-3">
-                        <textarea
-                            class="form-control"
-                            id="complaint_text"
-                            rows="3"
-                            required
-                        ></textarea>
-                    </div>
-                    <button
-                        type="submit"
-                        class="btn btn-warning btn-login btn-block w-100 text-black mb-3"
-                    >
-                        Submit
-                    </button>
+                    <form method="post">
+                        <div class="mb-3">
+                            <textarea
+                                class="form-control"
+                                name="complaint_text"
+                                id="complaint_text"
+                                rows="3"
+                                required
+                            ></textarea>
+                        </div>
+                        <button
+                            type="submit"
+                            class="btn btn-warning btn-login btn-block w-100 text-black mb-3"
+                        >
+                            Submit
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

@@ -1,5 +1,5 @@
-import functools
 import mysql.connector
+import datetime
 
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
@@ -157,8 +157,20 @@ def complaints():
 @admin_login_required
 def reply():
     if request.method == 'POST':
-        pass
-    
+        text = request.form['complaint_text']
+        com = session.get('complaint-to-reply')
+        
+        db = get_db()
+        c = db.cursor()
+        c.execute("UPDATE complaints SET reply = %s WHERE id = %s", (text, com['id']))
+        c.execute("UPDATE complaints SET resolved_at = %s WHERE id = %s", 
+                  (datetime.datetime.now().strftime("%Y/%m/%d, %H:%M:%S"), com['id']))
+        c.execute("UPDATE complaints SET status = %s WHERE id = %s", ("resolved", com['id']))
+        db.commit()
+
+        return redirect(url_for('librarian.complaints'))
+
+
     com = session.get('complaint-to-reply')
     if not com:
         return redirect(url_for('librarian.complaints'))

@@ -22,7 +22,10 @@
     <body class="bg-warning-subtle">
         <nav class="navbar navbar-expand-lg bg-warning">
             <div class="container-fluid">
-                <a href="{{ url_for('librarian.index') }}" class="navbar-brand fs-2">
+                <a
+                    href="{{ url_for('librarian.index') }}"
+                    class="navbar-brand fs-2"
+                >
                     <img
                         src="{{ url_for('static', filename='img/CUSZ-03logo.png') }}"
                         alt="logo"
@@ -65,16 +68,19 @@
                             </a>
                         </div>
                         {% for book in books %}
-                        <a
-                            href="#"
+                        <div
                             class="list-group-item list-group-item-action"
                         >
                             <div class="d-flex w-100 justify-content-between">
                                 <h3 class="mb-1">{{ book['title'] }}</h3>
+                                {% if not book['nearest'] %}
+                                <small>Never Borrowed </small>
+                                {% else %}
                                 <small
                                     >Last borrowed: {{ book['nearest'] }} days
                                     ago</small
                                 >
+                                {% endif %}
                             </div>
                             <p class="mb-1">
                                 Total borrowed times: {{ book['total'] }}
@@ -82,7 +88,7 @@
                             <p class="mb-1">
                                 Copies Available: {{ book['copies'] }}
                             </p>
-                        </a>
+                        </div>
                         {% endfor %} {% if not books %}
                         <h3 class="border-top pt-3 text-body-tertiary">
                             No record

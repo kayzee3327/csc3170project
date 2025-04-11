@@ -69,11 +69,45 @@ def newitem():
 @admin_login_required
 def update():
     if request.method == 'POST':
-        pass
+        book = {
+            key: request.form[key] for key in ['title', 'author', 'year', 'isbn', 'copies']
+        }
+        b = session.get('book-to-update')
+
+        db = get_db()
+        c = db.cursor()
+        c.execute("""
+            UPDATE books 
+            SET 
+                title = %s,
+                author = %s,
+                published_year = %s,
+                isbn = %s,
+                copies = %s 
+            WHERE id = %s;""",
+            (book['title'], book['author'], book['year'], book['isbn'], book['copies'], b['id'])
+        )
+        db.commit()
+
+        return redirect(url_for('librarian.catalog'))
+
     b = session.get('book-to-update')
     if not b:
         return redirect(url_for('librarian.catalog'))
     return render_template('librarian/update.html', book=b)
+
+@bp.route('delete', methods=['GET', 'POST'])
+@admin_login_required
+def delete():
+    b = session.get('book-to-update')
+    
+    db = get_db()
+    c = db.cursor()
+    c.execute("DELETE FROM books where id = %s", (b['id'],))
+    db.commit()
+
+    return redirect(url_for("librarian.catalog"))
+
 
 @bp.route('/inventory', methods=['GET', 'POST'])
 @admin_login_required
@@ -104,8 +138,50 @@ def usage():
     if request.method == 'POST':
         pass
     
+    db = get_db()
+    c = db.cursor()
+    c.execute("""
+        SELECT 
+            books.id AS book_id,
+            books.title,
+            COUNT(borrows.id) AS borrow_count,
+            MAX(borrows.borrow_date) AS latest_borrow_date,
+            books.copies
+        FROM books
+        LEFT JOIN borrows 
+            ON books.id = borrows.book_id
+        GROUP BY books.id, books.title
+        ORDER BY borrow_count DESC, books.title ASC;
+    """)
+    us = c.fetchall()
 
-    return render_template('librarian/usage.html')
+    books = []
+    for u in us:
+        if u[3] is not None:
+            diff = datetime.datetime.now() - u[3]
+            
+            books.append(
+                {
+                    'id': u[0],
+                    'title': u[1],
+                    'total': u[2],
+                    'nearest': diff.days,
+                    'copies': u[4]
+                }
+            )
+        else:
+            books.append(
+                {
+                    'id': u[0],
+                    'title': u[1],
+                    'total': u[2],
+                    'nearest': u[3],
+                    'copies': u[4]
+                }
+            )
+
+
+    return render_template('librarian/usage.html', books=books)
 
 @bp.route('/complaints', methods=['GET', 'POST'])
 @admin_login_required
@@ -175,3 +251,5 @@ def reply():
     if not com:
         return redirect(url_for('librarian.complaints'))
     return render_template('librarian/reply.html', complaint=com)
+
+

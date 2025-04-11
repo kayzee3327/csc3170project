@@ -59,7 +59,9 @@
                 <div class="search-body">
                     <div class="mb-4 justify-content-between d-flex">
                         <h1>SEARCH RESULT</h1>
-                        <button type="button" class="btn btn-outline-dark"><i class="bi bi-arrow-left me-1 ms-1"></i></button>
+                        <a class="btn" href="{{ url_for('index') }}">
+                            <i class="bi bi-arrow-90deg-left fs-3"></i>
+                        </a>
                     </div>
                     <!-- 图书列表容器 -->
                     <div class="container">
@@ -71,7 +73,11 @@
                             <p class="text-muted">Published Year：{{ book['year'] }}</p>
                             <p class="text-muted">ISBN：{{ book['isbn'] }}</p>
                             <p class="text-muted">Copies：{{ book['copies'] }} </p>
-                            <button type="button" class="btn btn-primary position-absolute end-0 bottom-0">Borrow</button>
+                            <form method="post">
+                                <input type="hidden" name="id" value="{{ book['id'] }}">
+                                <button type="submit" class="btn btn-primary position-absolute end-0 bottom-0">Borrow</button>
+                            </form>
+                            
                         </div>
                         {% endfor %}
                         {% if not books %}

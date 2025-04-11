@@ -121,12 +121,18 @@ def load_logged_in_user():
 
         u = c.fetchone()
         g.user = {
+            'id': u[0],
             'username': u[1],
             'password': u[2],
             'role': u[3],
             'fullname': u[4],
             'email': u[5]
         }
+    
+    if request.endpoint == 'index' and request.path == '/':
+        if g.user is not None and g.user['role'] == 'librarian':
+            return redirect(url_for('librarian.index'))
+
 
 @bp.route('/logout')
 def logout():

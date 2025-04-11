@@ -46,7 +46,10 @@
                     </li>
                     {% endif %}
                     <li>
-                        <a class="btn btn-outline-dark" href="{{ url_for('auth.logout') }}"> 
+                        <a
+                            class="btn btn-outline-dark"
+                            href="{{ url_for('auth.logout') }}"
+                        >
                             Log out
                         </a>
                     </li>
@@ -58,40 +61,44 @@
             <div class="result-card container">
                 <div class="search-body">
                     <div class="mb-4 justify-content-between d-flex">
-                        <h1>ISSUE YOUR COMPLAINTS</h1>
-                        <button type="button" class="btn btn-outline-dark">
-                            <i class="bi bi-arrow-left me-1 ms-1"></i>
+                        <h1>ISSUE YOUR COMPLAINT</h1>
+                        <a class="btn" href="{{ url_for('index') }}">
+                            <i class="bi bi-arrow-90deg-left fs-3"></i>
+                        </a>
+                    </div>
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="complaint_title" class="form-label"
+                                >Title</label
+                            >
+                            <input
+                                type="text"
+                                class="form-control"
+                                name="complaint_title"
+                                id="complaint_title"
+                                value="New Complaint"
+                            />
+                        </div>
+                        <div class="mb-3">
+                            <label for="complaint_text" class="form-label"
+                                >Content</label
+                            >
+                            <textarea
+                                class="form-control"
+                                name="complaint_text"
+                                id="complaint_text"
+                                rows="3"
+                                required
+                            ></textarea>
+                        </div>
+                        <button
+                            type="submit"
+                            class="btn btn-warning btn-login btn-block w-100 text-black mb-3"
+                            onclick="return confirm('Are you sure?')"
+                        >
+                            Submit
                         </button>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="complaint_title" class="form-label"
-                            >Title</label
-                        >
-                        <input
-                            type="text"
-                            class="form-control"
-                            id="complaint_title"
-                            placeholder="New Complaint"
-                        />
-                    </div>
-                    <div class="mb-3">
-                        <label for="complaint_text" class="form-label"
-                            >Content</label
-                        >
-                        <textarea
-                            class="form-control"
-                            id="complaint_text"
-                            rows="3"
-                            required
-                        ></textarea>
-                    </div>
-                    <button
-                        type="submit"
-                        class="btn btn-warning btn-login btn-block w-100 text-black mb-3" 
-                    >
-                        Submit
-                    </button>
+                    </form>
                 </div>
             </div>
         </div>

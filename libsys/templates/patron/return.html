@@ -46,7 +46,10 @@
                     </li>
                     {% endif %}
                     <li>
-                        <a class="btn btn-outline-dark" href="{{ url_for('auth.logout') }}"> 
+                        <a
+                            class="btn btn-outline-dark"
+                            href="{{ url_for('auth.logout') }}"
+                        >
                             Log out
                         </a>
                     </li>
@@ -57,43 +60,71 @@
         <div class="content-wrapper" style="justify-content: center">
             <div class="result-card container">
                 <div class="search-body">
-                    <div class="mb-3 justify-content-between d-flex">
+                    <div class="mb-4 justify-content-between d-flex">
                         <h1>RETURN BOOKS</h1>
-                        <button type="button" class="btn btn-outline-dark"><i class="bi bi-arrow-left me-1 ms-1"></i></button>
+                        <a class="btn" href="{{ url_for('index') }}">
+                            <i class="bi bi-arrow-90deg-left fs-3"></i>
+                        </a>
                     </div>
-                    
+
                     <!-- 图书列表容器 -->
                     <div class="container">
                         {% for borrow in borrows %}
                         <!-- 图书项目 -->
                         <div class="border-top pt-3 position-relative">
-                            <a href="#" class="navbar-brand text-secondary-emphasis fs-2">{{ borrow['title'] }}</a>
-                            <p class="text-muted">Author：{{ book['borrow_date'] }}</p>
-                            <button type="button" class="btn btn-primary position-absolute end-0 bottom-0">Return</button>
+                            <div
+                                class="navbar-brand text-secondary-emphasis fs-2"
+                            >
+                                {{ borrow['title'] }}
+                            </div>
+                            <p class="text-muted">
+                                Borrowed At：{{ borrow['borrow_date'] }}
+                            </p>
+                            <form method="post">
+                                <input type="hidden" name="id" value="{{ borrow['id'] }}">
+                                <input type="hidden" name="book_id" value="{{ borrow['book_id'] }}">
+                                <button
+                                type="submit"
+                                class="btn btn-primary position-absolute end-0 bottom-0"
+                                onclick="return confirm('Are you sure?')"
+                            >
+                                Return
+                            </button>
+                            </form>
+                            
                         </div>
-                        {% endfor %}
-                        {% if not borrows %}
-                        <h3 class="border-top pt-3 text-body-tertiary">No book</h3>
+                        {% endfor %} {% if not borrows %}
+                        <h3 class="border-top pt-3 text-body-tertiary">
+                            No book
+                        </h3>
                         {% endif %}
                     </div>
-                    
+
                     <h1 class="mb-4 mt-5">HISTORY</h1>
                     <div class="container">
                         {% for history in history_borrows %}
                         <div class="border-top pt-3 position-relative">
-                            <a href="#" class="navbar-brand text-secondary-emphasis fs-2">{{ borrow['title'] }}</a>
-                            <p class="text-muted">Author：{{ book['borrow_date'] }}</p>
-                            <p class="text-muted">Author：{{ book['return_date'] }}</p>
+                            <div
+                                class="navbar-brand text-secondary-emphasis fs-2"
+                            >
+                                {{ history['title'] }}
+                            </div>
+                            <div class="text-muted">
+                                Borrowed At：{{ history['borrow_date'] }}
+                            </div>
+                            <div class="text-primary">
+                                Returned At：{{ history['return_date'] }}
+                            </div>
                         </div>
-                        {% endfor %}
-                        {% if not history_borrows %}
-                        <h3 class="border-top pt-3 text-body-tertiary">No record</h3>
+                        {% endfor %} {% if not history_borrows %}
+                        <h3 class="border-top pt-3 text-body-tertiary">
+                            No record
+                        </h3>
                         {% endif %}
                     </div>
                 </div>
             </div>
         </div>
-
 
         <script
             src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"

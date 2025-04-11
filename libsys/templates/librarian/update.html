@@ -56,21 +56,24 @@
 
         <div class="content-wrapper" style="justify-content: center">
             <div class="update-card ms-3 me-3">
-                <!-- 登录框头部 -->
-
-                <div class="login-header bg-warning">
-                    <h2>UPDATE BOOK INFO</h2>
-                    <h5>{{book['title']}}</h5>
-                </div>
-
                 <!-- 登录表单主体 -->
                 <div class="login-body">
-                    <div class="row g-3">
+                    <div class="mb-4 justify-content-between d-flex">
+                        <h1>UPDATE</h1>
+                        <a
+                            class="btn"
+                            href="{{ url_for('librarian.catalog') }}"
+                        >
+                            <i class="bi bi-arrow-90deg-left fs-3"></i>
+                        </a>
+                    </div>
+                    <form class="row g-3" method="post">
                         <div class="col-12">
                             <label for="title" class="form-label">Title</label>
                             <input
                                 type="text"
                                 class="form-control"
+                                name="title"
                                 id="title"
                                 placeholder="{{ book['title'] }}"
                                 value="{{ book['title'] }}"
@@ -85,6 +88,7 @@
                             <input
                                 type="text"
                                 class="form-control"
+                                name="author"
                                 id="author"
                                 placeholder="{{ book['author'] }}"
                                 value="{{ book['author'] }}"
@@ -96,6 +100,7 @@
                             <input
                                 type="text"
                                 class="form-control"
+                                name="year"
                                 id="year"
                                 placeholder="{{ book['year'] }}"
                                 value="{{ book['year'] }}"
@@ -108,6 +113,7 @@
                             <input
                                 type="text"
                                 class="form-control"
+                                name="isbn"
                                 id="isbn"
                                 placeholder="{{ book['isbn'] }}"
                                 value="{{ book['isbn'] }}"
@@ -121,6 +127,7 @@
                             <input
                                 type="text"
                                 class="form-control"
+                                name="copies"
                                 id="copies"
                                 placeholder="{{ book['copies'] }}"
                                 value="{{ book['copies'] }}"
@@ -129,17 +136,18 @@
                         </div>
 
                         <div class="col-12 d-flex justify-content-between">
-                            <button
-                                type="button"
+                            <a
+                                href="{{ url_for('librarian.delete') }}"
                                 class="btn btn-outline-danger"
+                                onclick="return confirm('Are you sure?')"
                             >
-                                Cancel
-                            </button>
+                                Delete
+                            </a>
                             <button type="submit" class="btn btn-warning">
                                 Submit
                             </button>
                         </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>

@@ -1,0 +1,37 @@
+services:
+  web:
+    build: .
+    platform: linux/amd64
+    ports:
+      - "8000:5000"  # 映射宿主机5000端口到容器5000端口
+    environment:
+      - DATABASE_HOST=db
+      - DATABASE_USER=root
+      - DATABASE_PASSWORD=
+      - DATABASE_NAME=myapp
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  db:
+    image: crpi-2zg9hvsh8g8vjhbv.cn-shenzhen.personal.cr.aliyuncs.com/kayzee3327/mysql:lts  # 替换为你的MySQL镜像名称
+    platform: linux/amd64
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=1
+      - MYSQL_DATABASE=library_management
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+    healthcheck:  # 可选健康检查
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  mysql-data:
+
+networks:
+  app-network:

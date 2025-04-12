@@ -11,6 +11,7 @@ To run this project,
    ```bash
    docker compose up
    ```
+3. Open `127.0.0.1:8000` in browser
 
 To stop the server,
 

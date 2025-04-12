@@ -13,7 +13,7 @@ To run this project,
    ```
 3. Open `127.0.0.1:8000` in browser
 
-To stop the server,
+To **correctly** stop the server,
 
-Type `ctrl-C` in the log terminal. Or use command `docker compose down` in another terminal
+Type command `docker compose down` in another terminal. If you want to run it again, use command `docker compose up` in dir `csc3170project`
    

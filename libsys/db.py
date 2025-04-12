@@ -10,9 +10,10 @@ def get_db(config=None):
             g.db = mysql.connector.connect(**config)
         else:
             c = {
-                "host": os.getenv("DB_HOST", "localhost"), 
+                "host": os.getenv("DB_HOST", "db"), 
                 "user": os.getenv("DB_USER", "root"),
                 "password": os.getenv("DB_PASSWORD", ""),
+                "port": os.getenv("DB_PORT", "3306"),
                 "database": os.getenv("DB_NAME", "library_management")
             }
 

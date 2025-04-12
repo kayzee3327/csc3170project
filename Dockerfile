@@ -21,7 +21,6 @@ RUN pip3 install -r requirements.txt
 
 WORKDIR /home/csc3170
 
-RUN flask --app libsys init-db
+RUN chmod 755 ./run.sh
 
-CMD ["flask", "run"]
-
+ENTRYPOINT [ "./run.sh" ]

@@ -44,6 +44,9 @@ def create_app(test_config=None):
     from . import librarian
     app.register_blueprint(librarian.bp)
 
+    from . import reservations
+    app.register_blueprint(reservations.bp)
+    
     app.add_url_rule('/', endpoint='index')
     
     return app

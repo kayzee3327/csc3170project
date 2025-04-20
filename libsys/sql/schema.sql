@@ -13,6 +13,13 @@ CREATE TABLE users (
     email VARCHAR(100)
 );
 
+-- Table to store book categories
+CREATE TABLE BOOK_CATEGORIES (
+    category_id INT AUTO_INCREMENT PRIMARY KEY,
+    category_name VARCHAR(50) NOT NULL,
+    description TEXT
+);
+
 -- Table to store book details
 CREATE TABLE books (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -23,13 +30,6 @@ CREATE TABLE books (
     copies INT NOT NULL,
     category_id INT NOT NULL,
     FOREIGN KEY (category_id) REFERENCES BOOK_CATEGORIES(category_id)
-);
-
--- Table to store book categories
-CREATE TABLE BOOK_CATEGORIES (
-    category_id INT AUTO_INCREMENT PRIMARY KEY,
-    category_name VARCHAR(50) NOT NULL,
-    description TEXT
 );
 
 -- Table to store borrow transactions

@@ -1,0 +1,159 @@
+import mysql.connector
+from datetime import datetime, timedelta
+
+from flask import (
+    Blueprint, flash, g, redirect, render_template, request, session, url_for
+)
+
+from libsys.db import get_db
+from libsys.auth import login_required
+
+bp = Blueprint('reservations', __name__, url_prefix='/reservations')
+
+@bp.route('/reserve/<int:book_id>', methods=['GET', 'POST'])
+@login_required
+def reserve(book_id):
+    """Implement book reservation functionality"""
+    db = get_db()
+    c = db.cursor()
+    
+    # Check if the book exists
+    c.execute("SELECT * FROM books WHERE id = %s", (book_id,))
+    book = c.fetchone()
+    
+    if book is None:
+        flash("Book not found.")
+        return redirect(url_for('student.booksearch'))
+    
+    # Check if the user already has an active reservation for this book
+    c.execute(
+        "SELECT * FROM BOOK_RESERVATIONS WHERE user_id = %s AND book_id = %s AND status = 'pending'",
+        (g.user['id'], book_id)
+    )
+    existing_reservation = c.fetchone()
+    
+    if existing_reservation:
+        flash("You already have an active reservation for this book.")
+        return redirect(url_for('reservations.my_reservations'))
+    
+    # Check if the user is currently borrowing this book
+    c.execute(
+        "SELECT * FROM borrows WHERE student_id = %s AND book_id = %s AND return_date IS NULL",
+        (g.user['id'], book_id)
+    )
+    active_borrow = c.fetchone()
+    
+    if active_borrow:
+        flash("You are currently borrowing this book.")
+        return redirect(url_for('student.bookreturn'))
+    
+    if request.method == 'POST':
+        # Create a new reservation with an expiry date of 7 days from now
+        expiry_date = datetime.now() + timedelta(days=7)
+        
+        try:
+            c.execute(
+                "INSERT INTO BOOK_RESERVATIONS (user_id, book_id, reservation_date, expiry_date, status) VALUES (%s, %s, %s, %s, %s)",
+                (g.user['id'], book_id, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
+                 expiry_date.strftime("%Y-%m-%d %H:%M:%S"), 'pending')
+            )
+            db.commit()
+            flash("Book reserved successfully. Your reservation will expire in 7 days.")
+            return redirect(url_for('reservations.my_reservations'))
+        except mysql.connector.Error as e:
+            flash(f"An error occurred: {e}")
+            return redirect(url_for('reservations.reserve', book_id=book_id))
+    
+    # Fetch book details for display
+    c.execute(
+        "SELECT books.*, BOOK_CATEGORIES.category_name FROM books LEFT JOIN BOOK_CATEGORIES "
+        "ON books.category_id = BOOK_CATEGORIES.category_id WHERE books.id = %s",
+        (book_id,)
+    )
+    book_details = c.fetchone()
+    
+    book_info = {
+        'id': book_details[0],
+        'title': book_details[1],
+        'author': book_details[2],
+        'year': book_details[3],
+        'isbn': book_details[4],
+        'copies': book_details[5],
+        'category_id': book_details[6],
+        'category_name': book_details[7] if book_details[7] else 'Undefined'
+    }
+    
+    return render_template('reservations/reserve.html', book=book_info)
+
+@bp.route('/my', methods=['GET'])
+@login_required
+def my_reservations():
+    """View my reservation list"""
+    db = get_db()
+    c = db.cursor()
+    
+    # Get user's reservations with book details
+    c.execute("""
+        SELECT 
+            r.*, 
+            b.title, 
+            b.author,
+            b.copies
+        FROM 
+            BOOK_RESERVATIONS r
+        JOIN 
+            books b ON r.book_id = b.id
+        WHERE 
+            r.user_id = %s
+        ORDER BY 
+            r.reservation_date DESC
+    """, (g.user['id'],))
+    
+    reservation_data = c.fetchall()
+    
+    reservations = []
+    for r in reservation_data:
+        reservations.append({
+            'id': r[0],
+            'user_id': r[1],
+            'book_id': r[2],
+            'reservation_date': r[3],
+            'expiry_date': r[4],
+            'status': r[5],
+            'title': r[6],
+            'author': r[7],
+            'copies': r[8]
+        })
+    
+    return render_template('reservations/my_reservations.html', reservations=reservations)
+
+@bp.route('/cancel/<int:reservation_id>', methods=['POST'])
+@login_required
+def cancel(reservation_id):
+    """Cancel reservation"""
+    db = get_db()
+    c = db.cursor()
+    
+    # Verify that the reservation belongs to the current user
+    c.execute(
+        "SELECT * FROM BOOK_RESERVATIONS WHERE reservation_id = %s AND user_id = %s",
+        (reservation_id, g.user['id'])
+    )
+    reservation = c.fetchone()
+    
+    if reservation is None:
+        flash("Reservation not found or does not belong to you.")
+        return redirect(url_for('reservations.my_reservations'))
+    
+    # Cancel the reservation
+    try:
+        c.execute(
+            "UPDATE BOOK_RESERVATIONS SET status = 'cancelled' WHERE reservation_id = %s",
+            (reservation_id,)
+        )
+        db.commit()
+        flash("Reservation cancelled successfully.")
+    except mysql.connector.Error as e:
+        flash(f"An error occurred: {e}")
+    
+    return redirect(url_for('reservations.my_reservations'))

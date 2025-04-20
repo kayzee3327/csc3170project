@@ -38,8 +38,8 @@ def create_app(test_config=None):
     from . import auth
     app.register_blueprint(auth.bp)
 
-    from . import patron
-    app.register_blueprint(patron.bp)
+    from . import student
+    app.register_blueprint(student.bp)
 
     from . import librarian
     app.register_blueprint(librarian.bp)

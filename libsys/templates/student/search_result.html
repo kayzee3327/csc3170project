@@ -22,7 +22,7 @@
         />
         <link
             rel="stylesheet"
-            href=" {{ url_for('static', filename='css/patron.css') }} "
+            href=" {{ url_for('static', filename='css/student.css') }} "
         />
     </head>
     <body class="custom-bg">
@@ -46,10 +46,7 @@
                     </li>
                     {% endif %}
                     <li>
-                        <a
-                            class="btn btn-outline-dark"
-                            href="{{ url_for('auth.logout') }}"
-                        >
+                        <a class="btn btn-outline-dark" href="{{ url_for('auth.logout') }}"> 
                             Log out
                         </a>
                     </li>
@@ -58,65 +55,35 @@
         </nav>
 
         <div class="content-wrapper" style="justify-content: center">
-            <div class="search-card container">
-                <!-- 登录表单主体 -->
+            <div class="result-card container">
                 <div class="search-body">
                     <div class="mb-4 justify-content-between d-flex">
-                        <h1>BOOK SEARCH</h1>
+                        <h1>SEARCH RESULT</h1>
                         <a class="btn" href="{{ url_for('index') }}">
                             <i class="bi bi-arrow-90deg-left fs-3"></i>
                         </a>
                     </div>
-                    <div>Try to search by bookname, author or isbn!</div>
-                    <form method="post">
-                        <!-- 书名输入 -->
-                        <div class="form-floating mb-3">
-                            <input
-                                type="text"
-                                class="form-control"
-                                name="bookname"
-                                id="bookname"
-                                placeholder="bookname"
-                            />
-                            <label for="bookname">Book Name</label>
+                    <!-- 图书列表容器 -->
+                    <div class="container">
+                        {% for book in books %}
+                        <!-- 图书项目 -->
+                        <div class="border-top pt-3 position-relative">
+                            <a href="#" class="navbar-brand text-secondary-emphasis fs-2">{{ book['title'] }}</a>
+                            <p class="text-muted">Author：{{ book['author'] }}</p>
+                            <p class="text-muted">Published Year：{{ book['year'] }}</p>
+                            <p class="text-muted">ISBN：{{ book['isbn'] }}</p>
+                            <p class="text-muted">Copies：{{ book['copies'] }} </p>
+                            <form method="post">
+                                <input type="hidden" name="id" value="{{ book['id'] }}">
+                                <button type="submit" class="btn btn-primary position-absolute end-0 bottom-0">Borrow</button>
+                            </form>
+                            
                         </div>
-
-                        <!-- 作者输入 -->
-                        <div class="form-floating mb-4">
-                            <input
-                                type="text"
-                                class="form-control"
-                                name="author"
-                                id="author"
-                                placeholder="author"
-                            />
-                            <label for="author">Author</label>
-                        </div>
-
-                        <!-- isbn输入 -->
-                        <div class="form-floating mb-4">
-                            <input
-                                type="text"
-                                class="form-control"
-                                name="isbn"
-                                id="isbn"
-                                placeholder="isbn"
-                            />
-                            <label for="isbn">ISBN</label>
-                        </div>
-
-                        {% for message in get_flashed_messages() %}
-                        <div class="flash text-danger">{{ message }}</div>
                         {% endfor %}
-                        <!-- 登录按钮 -->
-                        <button
-                            type="submit"
-                            class="btn btn-warning btn-login btn-block w-100 text-black mb-3"
-                        >
-                            <i class="bi bi-search me-2"></i>
-                            Search
-                        </button>
-                    </form>
+                        {% if not books %}
+                        <h3 class="border-top pt-3 text-body-tertiary">No Result</h3>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

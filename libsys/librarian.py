@@ -198,13 +198,13 @@ def complaints():
     cps = c.fetchall()
 
     com = []
-    scom = []
+    scom = [] #solve complaints
     for cp in cps:
         if cp[4] == 'open':
             com.append(
                 {
                     'id': cp[0],
-                    'patron_id': cp[1],
+                    'student_id': cp[1],
                     'title': cp[2],
                     'content': cp[3],
                     'status': cp[4],
@@ -217,7 +217,7 @@ def complaints():
             scom.append(
                 {
                     'id': cp[0],
-                    'patron_id': cp[1],
+                    'student_id': cp[1],
                     'title': cp[2],
                     'content': cp[3],
                     'status': cp[4],

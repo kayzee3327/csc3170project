@@ -10,7 +10,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from libsys.db import get_db
 from libsys.auth import login_required
 
-bp = Blueprint('patron', __name__, url_prefix='/patron')
+bp = Blueprint('student', __name__, url_prefix='/student')
 
 @bp.route('/booksearch', methods=['GET', 'POST'])
 @login_required
@@ -29,12 +29,12 @@ def booksearch():
                 'author': author,
                 'isbn': isbn
             }
-            return redirect(url_for('patron.bookresult'))
+            return redirect(url_for('student.bookresult'))
 
         flash(error)
-        return redirect(url_for('patron.booksearch'))
+        return redirect(url_for('student.booksearch'))
 
-    return render_template('patron/book_search.html')
+    return render_template('student/book_search.html')
 
 @bp.route('/bookresult', methods=['GET', 'POST'])
 @login_required
@@ -45,12 +45,12 @@ def bookresult():
         id = request.form['id']
 
         u = session.get('user_id', None)
-        c.execute("INSERT INTO borrows (patron_id, book_id, borrow_date, return_date) "
+        c.execute("INSERT INTO borrows (student_id, book_id, borrow_date, return_date) "
                   "VALUES (%s, %s, %s, NULL)", 
                   (u, id, datetime.now().strftime("%Y/%m/%d, %H:%M:%S")))
         c.execute("UPDATE books SET copies = copies - 1 WHERE id = %s", (id,))
         db.commit()
-        return redirect(url_for('patron.bookresult'))
+        return redirect(url_for('student.bookresult'))
     
     
 
@@ -94,7 +94,7 @@ def bookresult():
             })
 
 
-    return render_template('patron/search_result.html', books=books)
+    return render_template('student/search_result.html', books=books)
 
 
 @bp.route('/bookreturn', methods=['GET', 'POST'])
@@ -109,7 +109,7 @@ def bookreturn():
                   (datetime.now().strftime("%Y/%m/%d, %H:%M:%S"), id))
         c.execute("UPDATE books SET copies = copies + 1 WHERE id = %s", (book_id,))
         db.commit()
-        return redirect(url_for('patron.bookreturn'))
+        return redirect(url_for('student.bookreturn'))
 
     u = session.get('user_id')
     c.execute("""
@@ -120,7 +120,7 @@ def bookreturn():
         INNER JOIN books 
             ON borrows.book_id = books.id  -- 通过 book_id 关联书籍表
         WHERE 
-            borrows.patron_id = %s  -- 筛选指定用户
+            borrows.student_id = %s  -- 筛选指定用户
         ORDER BY borrows.borrow_date DESC;  -- 按借阅日期降序排列（可选）
     """, (u,))
 
@@ -131,7 +131,7 @@ def bookreturn():
         if b[4] == None:
             borrows.append({
                 'id': b[0],
-                'patron_id': b[1],
+                'student_id': b[1],
                 'book_id': b[2],
                 'borrow_date': b[3],
                 'return_date': b[4],
@@ -140,14 +140,14 @@ def bookreturn():
         else:
             history_borrows.append({
                 'id': b[0],
-                'patron_id': b[1],
+                'student_id': b[1],
                 'book_id': b[2],
                 'borrow_date': b[3],
                 'return_date': b[4],
                 'title': b[5]
             })
 
-    return render_template('patron/return.html', borrows=borrows, history_borrows=history_borrows)
+    return render_template('student/return.html', borrows=borrows, history_borrows=history_borrows)
 
 @bp.route('/complaint', methods=['GET', 'POST'])
 @login_required
@@ -158,12 +158,12 @@ def complaint():
 
         if not complaint_text or not complaint_text:
             flash("Please give title and text.")
-            return redirect(url_for('patron.complaint'))
+            return redirect(url_for('student.complaint'))
         else:
             db = get_db()
             c = db.cursor()
             u = session.get('user_id')
-            c.execute("INSERT INTO complaints (patron_id, title, content, status, created_at, resolved_at, reply) VALUES " \
+            c.execute("INSERT INTO complaints (student_id, title, content, status, created_at, resolved_at, reply) VALUES " \
                       "(%s, %s, %s, %s, %s, NULL, NULL)",
                       (u, complaint_title, complaint_text, 'open', datetime.now().strftime("%Y/%m/%d, %H:%M:%S"))
                       )
@@ -172,4 +172,4 @@ def complaint():
             return redirect(url_for('index'))
 
 
-    return render_template('patron/complaint.html')
+    return render_template('student/complaint.html')

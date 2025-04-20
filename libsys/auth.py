@@ -34,7 +34,7 @@ def register():
             try:
                 c.execute(
                     "INSERT INTO users (username, password, role, full_name, email) VALUES (%s, %s, %s, %s, %s)",
-                    (username, password, 'patron', fullname, email),
+                    (username, password, 'student', fullname, email),
                 )
                 db.commit()
                 return redirect(url_for("auth.login"))
@@ -55,7 +55,7 @@ def login():
         error = None
 
         c.execute(
-            'SELECT * FROM users WHERE username = %s and role = \'patron\'', (username,)
+            'SELECT * FROM users WHERE username = %s and role = \'student\'', (username,)
         )
 
         user = c.fetchone()
@@ -142,7 +142,7 @@ def logout():
 def login_required(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):
-        if g.user is None or g.user['role'] != 'patron':
+        if g.user is None or g.user['role'] != 'student':
             return redirect(url_for('auth.login'))
         return view(**kwargs)
     return wrapped_view

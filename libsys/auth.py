@@ -8,6 +8,7 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from libsys.db import get_db
+from libsys.logger import log_action
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -37,6 +38,15 @@ def register():
                     (username, password, 'student', fullname, email),
                 )
                 db.commit()
+                
+                c.execute("SELECT LAST_INSERT_ID()")
+                user_id = c.fetchone()[0]
+                log_action(None, "User Registration", "users", user_id, {
+                    "username": username,
+                    "role": 'patron',
+                    "full_name": fullname,
+                    "email": email
+                })
                 return redirect(url_for("auth.login"))
             except mysql.connector.IntegrityError:
                 error = f"Username {username} is registered."
@@ -66,6 +76,10 @@ def login():
             error = 'Incorrect password.'
 
         if error is None:
+            log_action(user[0], "User Login", "users", user[0], {
+                "username": username,
+                "role": user[3]
+            })
             session.clear()
             session['user_id'] = user[0]
             return redirect(url_for('index'))
@@ -96,6 +110,10 @@ def librarian():
             error = 'Incorrect password.'
 
         if error is None:
+            log_action(user[0], "User Login", "users", user[0], {
+                "username": username,
+                "role": user[3]
+            })
             session.clear()
             session['user_id'] = user[0]
             return redirect(url_for('librarian.index'))

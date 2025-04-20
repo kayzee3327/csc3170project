@@ -7,6 +7,7 @@ from flask import (
 
 from libsys.db import get_db
 from libsys.auth import login_required
+from libsys.logger import log_action
 
 bp = Blueprint('reservations', __name__, url_prefix='/reservations')
 
@@ -59,6 +60,13 @@ def reserve(book_id):
             )
             db.commit()
             flash("Book reserved successfully. Your reservation will expire in 7 days.")
+            
+            c.execute("SELECT LAST_INSERT_ID()")
+            reservation_id = c.fetchone()[0]
+            log_action(g.user['id'], "Book Reserved", "books", book_id, {
+                "reservation_id": reservation_id,
+                "expiry_date": expiry_date.strftime("%Y-%m-%d %H:%M:%S")
+            })
             return redirect(url_for('reservations.my_reservations'))
         except mysql.connector.Error as e:
             flash(f"An error occurred: {e}")
@@ -153,6 +161,10 @@ def cancel(reservation_id):
         )
         db.commit()
         flash("Reservation cancelled successfully.")
+
+        log_action(g.user['id'], "Reservation Cancelled", "books", reservation[2], {
+            "reservation_id": reservation_id
+        })
     except mysql.connector.Error as e:
         flash(f"An error occurred: {e}")
     

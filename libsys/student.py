@@ -9,6 +9,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from libsys.db import get_db
 from libsys.auth import login_required
+from libsys.logger import log_action
 
 bp = Blueprint('student', __name__, url_prefix='/student')
 
@@ -50,6 +51,14 @@ def bookresult():
                   (u, id, datetime.now().strftime("%Y/%m/%d, %H:%M:%S")))
         c.execute("UPDATE books SET copies = copies - 1 WHERE id = %s", (id,))
         db.commit()
+        
+        c.execute("SELECT LAST_INSERT_ID()")
+        borrow_id = c.fetchone()[0]
+        log_action(u, "Book Borrowed", "books", id, {
+            "borrow_id": borrow_id,
+            "borrow_date": datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
+        })
+        
         return redirect(url_for('student.bookresult'))
     
     
@@ -109,6 +118,11 @@ def bookreturn():
                   (datetime.now().strftime("%Y/%m/%d, %H:%M:%S"), id))
         c.execute("UPDATE books SET copies = copies + 1 WHERE id = %s", (book_id,))
         db.commit()
+
+        log_action(u, "Book Returned", "books", book_id, {
+            "borrow_id": id,
+            "return_date": datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
+        })
         return redirect(url_for('student.bookreturn'))
 
     u = session.get('user_id')
@@ -169,6 +183,12 @@ def complaint():
                       )
             db.commit()
 
+            c.execute("SELECT LAST_INSERT_ID()")
+            complaint_id = c.fetchone()[0]
+            log_action(u, "Complaint Submitted", "complaints", complaint_id, {
+                "title": complaint_title,
+                "content": complaint_text
+            })
             return redirect(url_for('index'))
 
 

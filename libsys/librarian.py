@@ -1,5 +1,6 @@
 import mysql.connector
 import datetime
+import json
 
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
@@ -9,6 +10,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from libsys.db import get_db
 from libsys.auth import admin_login_required
+from libsys.logger import log_action
 
 bp = Blueprint('librarian', __name__, url_prefix='/librarian')
 
@@ -74,6 +76,16 @@ def newitem():
         c.execute("INSERT INTO books (title, author, published_year, isbn, copies, category_id) VALUES (%s, %s, %s, %s, %s, %s)",
                   (book['title'], book['author'], book['year'], book['isbn'], book['copies'], category_id))
         db.commit()
+
+        c.execute("SELECT LAST_INSERT_ID()")
+        book_id = c.fetchone()[0]
+        log_action(g.user['id'], "Book Added", "books", book_id, {
+            "title": book['title'],
+            "author": book['author'],
+            "isbn": book['isbn'],
+            "copies": book['copies'],
+            "category_id": category_id
+        })
         return redirect(url_for('librarian.catalog'))
 
     db = get_db()
@@ -115,7 +127,14 @@ def update():
             (book['title'], book['author'], book['year'], book['isbn'], book['copies'], category_id, b['id'])
         )
         db.commit()
-
+        
+        log_action(g.user['id'], "Book Updated", "books", b['id'], {
+            "title": book['title'],
+            "author": book['author'],
+            "isbn": book['isbn'],
+            "copies": book['copies'],
+            "category_id": category_id
+        })
         return redirect(url_for('librarian.catalog'))
 
     b = session.get('book-to-update')
@@ -150,6 +169,11 @@ def delete():
     c.execute("DELETE FROM books where id = %s", (b['id'],))
     db.commit()
 
+    log_action(g.user['id'], "Book Deleted", "books", b['id'], {
+        "title": b['title'],
+        "author": b['author'],
+        "isbn": b['isbn']
+    })
     return redirect(url_for("librarian.catalog"))
 
 
@@ -288,6 +312,10 @@ def reply():
         c.execute("UPDATE complaints SET status = %s WHERE id = %s", ("resolved", com['id']))
         db.commit()
 
+        log_action(g.user['id'], "Complaint Resolved", "complaints", com['id'], {
+            "reply": text,
+            "resolved_at": datetime.datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
+        })
         return redirect(url_for('librarian.complaints'))
 
 
@@ -340,6 +368,13 @@ def new_category():
                     (category_name, category_description)
                 )
                 db.commit()
+                
+                c.execute("SELECT LAST_INSERT_ID()")
+                category_id = c.fetchone()[0]
+                log_action(g.user['id'], "Category Added", "categories", category_id, {
+                    "name": category_name,
+                    "description": category_description
+                })
                 return redirect(url_for('librarian.categories'))
             except mysql.connector.Error as e:
                 error = f"Insert category fails:{e}"
@@ -376,6 +411,11 @@ def update_category(category_id):
                     (category_name, category_description, category_id)
                 )
                 db.commit()
+                
+                log_action(g.user['id'], "Category Updated", "categories", category_id, {
+                "name": category_name,
+                "description": category_description
+                })
                 return redirect(url_for('librarian.categories'))
             except mysql.connector.Error as e:
                 error = f"Update category fails:{e}"
@@ -406,8 +446,104 @@ def delete_category(category_id):
     try:
         c.execute('DELETE FROM BOOK_CATEGORIES WHERE category_id = %s', (category_id,))
         db.commit()
+        
+        log_action(g.user['id'], "Category Deleted", "categories", category_id, {
+            "name": category_name
+        })
         flash('Category has been deleted successfully')
     except mysql.connector.Error as e:
         flash(f'Category deletes fails:{e}')
     
     return redirect(url_for('librarian.categories'))
+
+@bp.route('/logs', methods=['GET'])
+@admin_login_required
+def logs():
+    """View system logs"""
+    # Get query parameters for filtering
+    action_filter = request.args.get('action', '')
+    entity_type_filter = request.args.get('entity_type', '')
+    date_filter = request.args.get('date', '')
+    user_filter = request.args.get('user', '')
+    
+    db = get_db()
+    c = db.cursor()
+    
+    # Base query
+    query = """
+        SELECT 
+            l.log_id, 
+            l.user_id, 
+            u.username,
+            l.action, 
+            l.entity_type, 
+            l.entity_id, 
+            l.details, 
+            l.timestamp
+        FROM 
+            SYSTEM_LOGS l
+        LEFT JOIN 
+            users u ON l.user_id = u.id
+        WHERE 1=1
+    """
+    params = []
+    
+    # Add filters if provided
+    if action_filter:
+        query += " AND l.action LIKE %s"
+        params.append(f'%{action_filter}%')
+    
+    if entity_type_filter:
+        query += " AND l.entity_type = %s"
+        params.append(entity_type_filter)
+    
+    if date_filter:
+        query += " AND DATE(l.timestamp) = %s"
+        params.append(date_filter)
+    
+    if user_filter:
+        query += " AND (u.username LIKE %s OR u.full_name LIKE %s)"
+        params.append(f'%{user_filter}%')
+        params.append(f'%{user_filter}%')
+    
+    # Add ordering
+    query += " ORDER BY l.timestamp DESC LIMIT 100"
+    
+    c.execute(query, params)
+    log_data = c.fetchall()
+    
+    # Get distinct action types and entity types for filter dropdowns
+    c.execute("SELECT DISTINCT action FROM SYSTEM_LOGS ORDER BY action")
+    actions = [row[0] for row in c.fetchall()]
+    
+    c.execute("SELECT DISTINCT entity_type FROM SYSTEM_LOGS ORDER BY entity_type")
+    entity_types = [row[0] for row in c.fetchall()]
+    
+    logs = []
+    for log in log_data:
+        # Parse JSON details if present
+        details = json.loads(log[6]) if log[6] else {}
+        
+        logs.append({
+            'id': log[0],
+            'user_id': log[1],
+            'username': log[2] or 'System',
+            'action': log[3],
+            'entity_type': log[4],
+            'entity_id': log[5],
+            'details': details,
+            'timestamp': log[7]
+        })
+    
+    return render_template(
+        'librarian/logs.html', 
+        logs=logs, 
+        actions=actions, 
+        entity_types=entity_types,
+        filters={
+            'action': action_filter,
+            'entity_type': entity_type_filter,
+            'date': date_filter,
+            'user': user_filter
+        }
+    )

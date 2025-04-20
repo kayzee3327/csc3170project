@@ -33,7 +33,17 @@ def catalog():
     db = get_db()
     c = db.cursor()
 
-    c.execute('SELECT * FROM books ORDER BY title ASC;')
+    c.execute('''
+        SELECT 
+            books.*, 
+            BOOK_CATEGORIES.category_name 
+        FROM 
+            books 
+        LEFT JOIN 
+            BOOK_CATEGORIES ON books.category_id = BOOK_CATEGORIES.category_id 
+        ORDER BY 
+            books.title ASC;
+    ''')
     b = c.fetchall()
 
     books = []
@@ -44,7 +54,9 @@ def catalog():
             'author': book[2],
             'year': book[3],
             'isbn': book[4],
-            'copies': book[5]
+            'copies': book[5],
+            'category_id': book[6],
+            'category_name': book[7] if book[7] else 'Undefined'
         })
     return render_template('librarian/catalog.html', books=books)
 
@@ -55,15 +67,28 @@ def newitem():
         book = {
             key: request.form[key] for key in ['title', 'author', 'year', 'isbn', 'copies']
         }
+        category_id = request.form['category']
 
         db = get_db()
         c = db.cursor()
-        c.execute("INSERT INTO books (title, author, published_year, isbn, copies) VALUES (%s, %s, %s, %s, %s)",
-                  (book['title'], book['author'], book['year'], book['isbn'], book['copies']))
+        c.execute("INSERT INTO books (title, author, published_year, isbn, copies, category_id) VALUES (%s, %s, %s, %s, %s, %s)",
+                  (book['title'], book['author'], book['year'], book['isbn'], book['copies'], category_id))
         db.commit()
         return redirect(url_for('librarian.catalog'))
 
-    return render_template('librarian/newitem.html')
+    db = get_db()
+    c = db.cursor()
+    c.execute('SELECT category_id, category_name FROM BOOK_CATEGORIES ORDER BY category_name ASC')
+    categories_data = c.fetchall()
+    
+    categories = []
+    for category in categories_data:
+        categories.append({
+            'id': category[0],
+            'name': category[1]
+        })
+    
+    return render_template('librarian/newitem.html', categories=categories)
 
 @bp.route('/update', methods=['GET', 'POST'])
 @admin_login_required
@@ -72,6 +97,7 @@ def update():
         book = {
             key: request.form[key] for key in ['title', 'author', 'year', 'isbn', 'copies']
         }
+        category_id = request.form['category']
         b = session.get('book-to-update')
 
         db = get_db()
@@ -83,9 +109,10 @@ def update():
                 author = %s,
                 published_year = %s,
                 isbn = %s,
-                copies = %s 
+                copies = %s,
+                category_id = %s
             WHERE id = %s;""",
-            (book['title'], book['author'], book['year'], book['isbn'], book['copies'], b['id'])
+            (book['title'], book['author'], book['year'], book['isbn'], book['copies'], category_id, b['id'])
         )
         db.commit()
 
@@ -94,8 +121,25 @@ def update():
     b = session.get('book-to-update')
     if not b:
         return redirect(url_for('librarian.catalog'))
-    return render_template('librarian/update.html', book=b)
-
+    
+    db = get_db()
+    c = db.cursor()
+    c.execute('SELECT category_id FROM books WHERE id = %s', (b['id'],))
+    category_result = c.fetchone()
+    if category_result:
+        b['category_id'] = category_result[0]
+    
+    c.execute('SELECT category_id, category_name FROM BOOK_CATEGORIES ORDER BY category_name ASC')
+    categories_data = c.fetchall()
+    
+    categories = []
+    for category in categories_data:
+        categories.append({
+            'id': category[0],
+            'name': category[1]
+        })
+    
+    return render_template('librarian/update.html', book=b, categories=categories)
 @bp.route('delete', methods=['GET', 'POST'])
 @admin_login_required
 def delete():
@@ -252,4 +296,118 @@ def reply():
         return redirect(url_for('librarian.complaints'))
     return render_template('librarian/reply.html', complaint=com)
 
+@bp.route('/categories', methods=['GET'])
+@admin_login_required
+def categories():
+    db = get_db()
+    c = db.cursor()
+    
+    c.execute('SELECT * FROM BOOK_CATEGORIES ORDER BY category_name ASC;')
+    categories_data = c.fetchall()
+    
+    categories = []
+    for category in categories_data:
+        c.execute('SELECT COUNT(*) FROM books WHERE category_id = %s', (category[0],))
+        book_count = c.fetchone()[0]
+        
+        categories.append({
+            'id': category[0],
+            'name': category[1],
+            'description': category[2],
+            'book_count': book_count
+        })
+    
+    return render_template('librarian/categories.html', categories=categories)
 
+@bp.route('/new_category', methods=['GET', 'POST'])
+@admin_login_required
+def new_category():
+    if request.method == 'POST':
+        category_name = request.form['category_name'].strip()
+        category_description = request.form['category_description'].strip()
+        error = None
+        
+        if not category_name:
+            error = "category name cannot be null"
+        
+        if error is None:
+            db = get_db()
+            c = db.cursor()
+            
+            try:
+                c.execute(
+                    "INSERT INTO BOOK_CATEGORIES (category_name, description) VALUES (%s, %s)",
+                    (category_name, category_description)
+                )
+                db.commit()
+                return redirect(url_for('librarian.categories'))
+            except mysql.connector.Error as e:
+                error = f"Insert category fails:{e}"
+        
+        flash(error)
+        
+    return render_template('librarian/new_category.html')
+
+@bp.route('/update_category/<int:category_id>', methods=['GET', 'POST'])
+@admin_login_required
+def update_category(category_id):
+    db = get_db()
+    c = db.cursor()
+    
+    c.execute('SELECT * FROM BOOK_CATEGORIES WHERE category_id = %s', (category_id,))
+    category = c.fetchone()
+    
+    if category is None:
+        flash('Cannot find category: null')
+        return redirect(url_for('librarian.categories'))
+    
+    if request.method == 'POST':
+        category_name = request.form['category_name'].strip()
+        category_description = request.form['category_description'].strip()
+        error = None
+        
+        if not category_name:
+            error = "category name cannot be null"
+        
+        if error is None:
+            try:
+                c.execute(
+                    "UPDATE BOOK_CATEGORIES SET category_name = %s, description = %s WHERE category_id = %s",
+                    (category_name, category_description, category_id)
+                )
+                db.commit()
+                return redirect(url_for('librarian.categories'))
+            except mysql.connector.Error as e:
+                error = f"Update category fails:{e}"
+        
+        flash(error)
+    
+    category_dict = {
+        'id': category[0],
+        'name': category[1],
+        'description': category[2]
+    }
+    
+    return render_template('librarian/update_category.html', category=category_dict)
+
+@bp.route('/delete_category/<int:category_id>', methods=['POST'])
+@admin_login_required
+def delete_category(category_id):
+    db = get_db()
+    c = db.cursor()
+    
+    c.execute('SELECT COUNT(*) FROM books WHERE category_id = %s', (category_id,))
+    book_count = c.fetchone()[0]
+    
+    if book_count > 0:
+        flash(f"Cannot delete this category because there are {book_count} books belonging to this category.")
+        return redirect(url_for('librarian.categories'))
+    
+    try:
+        c.execute('DELETE FROM BOOK_CATEGORIES WHERE category_id = %s', (category_id,))
+        db.commit()
+        flash('Category has been deleted successfully')
+    except mysql.connector.Error as e:
+        flash(f'Category deletes fails:{e}')
+    
+    return redirect(url_for('librarian.categories'))

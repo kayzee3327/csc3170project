@@ -55,87 +55,51 @@
             <div class="catalog-card ms-3 me-3">
                 <div class="login-body">
                     <div class="mb-4 justify-content-between d-flex">
-                        <h1>CATALOGS</h1>
+                        <h1>Category</h1>
                         <a class="btn" href="{{ url_for('librarian.index') }}">
                             <i class="bi bi-arrow-90deg-left fs-3"></i>
                         </a>
                     </div>
+                    
+                    {% for message in get_flashed_messages() %}
+                    <div class="alert alert-warning">{{ message }}</div>
+                    {% endfor %}
+                    
                     <a
-                        href="{{ url_for('librarian.newitem') }}"
+                        href="{{ url_for('librarian.new_category') }}"
                         class="btn btn-outline-success btn-block w-100 mb-3"
                     >
-                        Add a New Item
+                        Add a New Category
                     </a>
+                    
                     <div class="container">
-                        {% for book in books %}
+                        {% for category in categories %}
                         <div class="border-top pt-3 position-relative">
-                            <div
-                                href="#"
-                                class="navbar-brand text-secondary-emphasis fs-2"
-                            >
-                                {{ book['title'] }}
+                            <div class="navbar-brand text-secondary-emphasis fs-2">
+                                {{ category['name'] }}
                             </div>
+                            <p>{{ category['description'] }}</p>
                             <p class="text-muted">
-                                Author:{{ book['author'] }}
+                                Number of book under this category:{{ category['book_count'] }}
                             </p>
-                            <p class="text-muted">
-                                Published Year:{{ book['year'] }}
-                            </p>
-                            <p class="text-muted">ISBN：{{ book['isbn'] }}</p>
-                            <p class="text-muted">
-                                Copies:{{ book['copies'] }}
-                            </p>
-                            <p class="text-muted">
-                                Category:{{ book['category_name'] }}
-                            </p>
-                            <form method="post">
-                                <input
-                                    type="hidden"
-                                    name="id"
-                                    id="id"
-                                    value="{{ book['id'] }}"
-                                />
-                                <input
-                                    type="hidden"
-                                    name="title"
-                                    id="title"
-                                    value="{{ book['title'] }}"
-                                />
-                                <input
-                                    type="hidden"
-                                    name="author"
-                                    id="author"
-                                    value="{{ book['author'] }}"
-                                />
-                                <input
-                                    type="hidden"
-                                    name="year"
-                                    id="year"
-                                    value="{{ book['year'] }}"
-                                />
-                                <input
-                                    type="hidden"
-                                    name="isbn"
-                                    id="isbn"
-                                    value="{{ book['isbn'] }}"
-                                />
-                                <input
-                                    type="hidden"
-                                    name="copies"
-                                    id="copies"
-                                    value="{{ book['copies'] }}"
-                                />
-                                <button
-                                    type="submit"
-                                    class="btn btn-warning position-absolute end-0 bottom-0"
-                                >
+                            <div class="d-flex position-absolute end-0 bottom-0">
+                                <a href="{{ url_for('librarian.update_category', category_id=category['id']) }}" 
+                                   class="btn btn-warning me-2">
                                     Edit
-                                </button>
-                            </form>
+                                </a>
+                                {% if category['book_count'] == 0 %}
+                                <form method="post" action="{{ url_for('librarian.delete_category', category_id=category['id']) }}"
+                                      onsubmit="return confirm('Delete this category?');">
+                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                </form>
+                                {% endif %}
+                            </div>
                         </div>
-                        {% endfor %} {% if not books %}
+                        {% endfor %}
+                        
+                        {% if not categories %}
                         <h3 class="border-top pt-3 text-body-tertiary">
-                            No Result
+                            No category
                         </h3>
                         {% endif %}
                     </div>

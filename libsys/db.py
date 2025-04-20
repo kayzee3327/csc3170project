@@ -42,6 +42,7 @@ def init_db():
     db = get_db()
     c = db.cursor()
     execute_sql_file(c, 'sql/schema.sql')
+    execute_sql_file(c, 'sql/categories.sql')
     execute_sql_file(c, 'sql/users.sql')
     execute_sql_file(c, 'sql/books.sql')
     execute_sql_file(c, 'sql/borrows.sql')

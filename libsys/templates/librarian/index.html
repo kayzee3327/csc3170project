@@ -52,26 +52,31 @@
         <div class="content-wrapper">
             <div class="container">
                 <div class="row justify-content-center g-4 mb-4">
-                    <div class="col-12 col-sm-6 col-lg-5 col-xl-4">
+                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
                         <a href="{{ url_for('librarian.catalog') }}" class="btn btn-primary d-block custom-btn">
                             <h2>UPDATE CATALOGS</h2>
                         </a>
                     </div>
 
-                    <div class="col-12 col-sm-6 col-lg-5 col-xl-4">
+                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                        <a href="{{ url_for('librarian.categories') }}" class="btn btn-info d-block custom-btn">
+                            <h2>UPDATE CATEGORIES</h2>
+                        </a>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
                         <a href="{{ url_for('librarian.inventory') }}" class="btn btn-success d-block custom-btn">
                             <h2>INVENTORY</h2>
                         </a>
                     </div>
-                </div>
-                <div class="row justify-content-center g-4">
-                    <div class="col-12 col-sm-6 col-lg-5 col-xl-4">
+
+                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
                         <a href="{{ url_for('librarian.usage') }}" class="btn btn-warning d-block custom-btn">
                             <h2>USAGE REPORT</h2>
                         </a>
                     </div>
 
-                    <div class="col-12 col-sm-6 col-lg-5 col-xl-4">
+                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
                         <a href="{{ url_for('librarian.complaints') }}" class="btn btn-danger d-block custom-btn">
                             <h2>REPLY TO COMPLAINTS</h2>
                         </a>

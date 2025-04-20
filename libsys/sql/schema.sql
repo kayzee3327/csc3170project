@@ -20,7 +20,16 @@ CREATE TABLE books (
     author VARCHAR(255) NOT NULL,
     published_year INT NOT NULL,
     isbn VARCHAR(20) UNIQUE NOT NULL,
-    copies INT NOT NULL
+    copies INT NOT NULL,
+    category_id INT NOT NULL,
+    FOREIGN KEY (category_id) REFERENCES BOOK_CATEGORIES(category_id)
+);
+
+-- Table to store book categories
+CREATE TABLE BOOK_CATEGORIES (
+    category_id INT AUTO_INCREMENT PRIMARY KEY,
+    category_name VARCHAR(50) NOT NULL,
+    description TEXT
 );
 
 -- Table to store borrow transactions
@@ -31,6 +40,18 @@ CREATE TABLE borrows (
     borrow_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     return_date DATETIME,
     FOREIGN KEY (student_id) REFERENCES users(id),
+    FOREIGN KEY (book_id) REFERENCES books(id)
+);
+
+-- Table to store book reservations
+CREATE TABLE BOOK_RESERVATIONS (
+    reservation_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    book_id INT NOT NULL,
+    reservation_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expiry_date DATETIME NOT NULL,
+    status ENUM('pending', 'fulfilled', 'cancelled', 'expired') DEFAULT 'pending',
+    FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (book_id) REFERENCES books(id)
 );
 
@@ -45,4 +66,16 @@ CREATE TABLE complaints (
     resolved_at DATETIME,
     reply TEXT,
     FOREIGN KEY (student_id) REFERENCES users(id)
+);
+
+-- Table to store system logs
+CREATE TABLE SYSTEM_LOGS (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    action VARCHAR(100),
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id INT,
+    details JSON,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );

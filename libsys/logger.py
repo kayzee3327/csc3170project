@@ -13,7 +13,7 @@ def log_action(user_id, action, entity_type, entity_id, details=None):
     
     # Insert log record
     c.execute(
-        "INSERT INTO SYSTEM_LOGS (user_id, action, entity_type, entity_id, details, timestamp) "
+        "INSERT INTO systen_logs (user_id, action, entity_type, entity_id, details, timestamp) "
         "VALUES (%s, %s, %s, %s, %s, %s)",
         (user_id, action, entity_type, entity_id, details_json, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )

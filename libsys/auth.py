@@ -134,12 +134,12 @@ def load_logged_in_user():
         c = db.cursor()
 
         c.execute(
-            'SELECT * FROM users WHERE id = %s', (user_id,)
+            'SELECT * FROM users WHERE user_id = %s', (user_id,)
         )
 
         u = c.fetchone()
         g.user = {
-            'id': u[0],
+            'user_id': u[0],
             'username': u[1],
             'password': u[2],
             'role': u[3],

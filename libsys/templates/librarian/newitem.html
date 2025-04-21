@@ -130,7 +130,7 @@
                             <label for="category" class="form-label">Category</label>
                             <select class="form-select" name="category" id="category" required>
                                 {% for category in categories %}
-                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                    <option value="{{ category.category_id }}">{{ category.category_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>

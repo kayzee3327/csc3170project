@@ -1,5 +1,5 @@
 -- Insert Book Categories
-INSERT INTO BOOK_CATEGORIES (category_name, description) VALUES 
+INSERT INTO book_categories (category_name, description) VALUES 
 ('Programming Fundamentals', 'Introductory books on programming languages and basic programming concepts'),
 ('Algorithms and Data Structures', 'Books about algorithm design, analysis and data structures'),
 ('Database Systems', 'Books related to database management, design and implementation'),

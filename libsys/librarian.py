@@ -26,7 +26,7 @@ def index():
 def catalog():
     if request.method == 'POST':
         book = {
-            key: request.form[key] for key in ['id', 'title', 'author', 'year', 'isbn', 'copies']
+            key: request.form[key] for key in ['book_id', 'title', 'author', 'published_year', 'isbn', 'copies']
         }
         session['book-to-update'] = book
         return redirect(url_for('librarian.update'))
@@ -38,11 +38,11 @@ def catalog():
     c.execute('''
         SELECT 
             books.*, 
-            BOOK_CATEGORIES.category_name 
+            book_categories.category_name 
         FROM 
             books 
         LEFT JOIN 
-            BOOK_CATEGORIES ON books.category_id = BOOK_CATEGORIES.category_id 
+            book_categories ON books.category_id = book_categories.category_id 
         ORDER BY 
             books.title ASC;
     ''')
@@ -51,7 +51,7 @@ def catalog():
     books = []
     for book in b:
         books.append({
-            'id': book[0],
+            'book_id': book[0],
             'title': book[1],
             'author': book[2],
             'year': book[3],
@@ -79,7 +79,7 @@ def newitem():
 
         c.execute("SELECT LAST_INSERT_ID()")
         book_id = c.fetchone()[0]
-        log_action(g.user['id'], "Book Added", "books", book_id, {
+        log_action(g.user['user_id'], "Book Added", "books", book_id, {
             "title": book['title'],
             "author": book['author'],
             "isbn": book['isbn'],
@@ -90,13 +90,13 @@ def newitem():
 
     db = get_db()
     c = db.cursor()
-    c.execute('SELECT category_id, category_name FROM BOOK_CATEGORIES ORDER BY category_name ASC')
+    c.execute('SELECT category_id, category_name FROM book_categories ORDER BY category_name ASC')
     categories_data = c.fetchall()
     
     categories = []
     for category in categories_data:
         categories.append({
-            'id': category[0],
+            'category_id': category[0],
             'name': category[1]
         })
     
@@ -123,12 +123,12 @@ def update():
                 isbn = %s,
                 copies = %s,
                 category_id = %s
-            WHERE id = %s;""",
-            (book['title'], book['author'], book['year'], book['isbn'], book['copies'], category_id, b['id'])
+            WHERE book_id = %s;""",
+            (book['title'], book['author'], book['year'], book['isbn'], book['copies'], category_id, b['book_id'])
         )
         db.commit()
         
-        log_action(g.user['id'], "Book Updated", "books", b['id'], {
+        log_action(g.user['user_id'], "Book Updated", "books", b['book_id'], {
             "title": book['title'],
             "author": book['author'],
             "isbn": book['isbn'],
@@ -143,22 +143,23 @@ def update():
     
     db = get_db()
     c = db.cursor()
-    c.execute('SELECT category_id FROM books WHERE id = %s', (b['id'],))
+    c.execute('SELECT category_id FROM books WHERE book_id = %s', (b['book_id'],))
     category_result = c.fetchone()
     if category_result:
         b['category_id'] = category_result[0]
     
-    c.execute('SELECT category_id, category_name FROM BOOK_CATEGORIES ORDER BY category_name ASC')
+    c.execute('SELECT category_id, category_name FROM book_categories ORDER BY category_name ASC')
     categories_data = c.fetchall()
     
     categories = []
     for category in categories_data:
         categories.append({
-            'id': category[0],
-            'name': category[1]
+            'category_id': category[0],
+            'category_name': category[1]
         })
     
     return render_template('librarian/update.html', book=b, categories=categories)
+
 @bp.route('delete', methods=['GET', 'POST'])
 @admin_login_required
 def delete():
@@ -166,10 +167,10 @@ def delete():
     
     db = get_db()
     c = db.cursor()
-    c.execute("DELETE FROM books where id = %s", (b['id'],))
+    c.execute("DELETE FROM books where book_id = %s", (b['book_id'],))
     db.commit()
 
-    log_action(g.user['id'], "Book Deleted", "books", b['id'], {
+    log_action(g.user['user_id'], "Book Deleted", "books", b['book_id'], {
         "title": b['title'],
         "author": b['author'],
         "isbn": b['isbn']
@@ -191,7 +192,7 @@ def inventory():
     books = []
     for book in b:
         books.append({
-            'id': book[0],
+            'book_id': book[0],
             'title': book[1],
             'author': book[2],
             'year': book[3],
@@ -210,15 +211,15 @@ def usage():
     c = db.cursor()
     c.execute("""
         SELECT 
-            books.id AS book_id,
+            books.book_id AS book_id,
             books.title,
-            COUNT(borrows.id) AS borrow_count,
+            COUNT(borrows.borrow_id) AS borrow_count,
             MAX(borrows.borrow_date) AS latest_borrow_date,
             books.copies
         FROM books
         LEFT JOIN borrows 
-            ON books.id = borrows.book_id
-        GROUP BY books.id, books.title
+            ON books.book_id = borrows.book_id
+        GROUP BY books.book_id, books.title
         ORDER BY borrow_count DESC, books.title ASC;
     """)
     us = c.fetchall()
@@ -230,7 +231,7 @@ def usage():
             
             books.append(
                 {
-                    'id': u[0],
+                    'book_id': u[0],
                     'title': u[1],
                     'total': u[2],
                     'nearest': diff.days,
@@ -240,7 +241,7 @@ def usage():
         else:
             books.append(
                 {
-                    'id': u[0],
+                    'book_id': u[0],
                     'title': u[1],
                     'total': u[2],
                     'nearest': u[3],
@@ -255,7 +256,7 @@ def usage():
 @admin_login_required
 def complaints():
     if request.method == 'POST':
-        com = {key:request.form[key] for key in ['id', 'title', 'content']}
+        com = {key:request.form[key] for key in ['complaint_id', 'title', 'content']}
         session['complaint-to-reply'] = com
         return redirect(url_for('librarian.reply'))
 
@@ -271,27 +272,29 @@ def complaints():
         if cp[4] == 'open':
             com.append(
                 {
-                    'id': cp[0],
-                    'student_id': cp[1],
+                    'complaint_id': cp[0],
+                    'user_id': cp[1],
                     'title': cp[2],
                     'content': cp[3],
                     'status': cp[4],
                     'created_at': cp[5],
                     'resolved_at': cp[6],
-                    'reply': cp[7]
+                    'resolved_by': cp[7],
+                    'reply': cp[8]
                 }
             )
         else:
             scom.append(
                 {
-                    'id': cp[0],
-                    'student_id': cp[1],
+                    'complaint_id': cp[0],
+                    'user_id': cp[1],
                     'title': cp[2],
                     'content': cp[3],
                     'status': cp[4],
                     'created_at': cp[5],
                     'resolved_at': cp[6],
-                    'reply': cp[7]
+                    'resolved_by': cp[7],
+                    'reply': cp[8]
                 }
             )
 
@@ -306,13 +309,13 @@ def reply():
         
         db = get_db()
         c = db.cursor()
-        c.execute("UPDATE complaints SET reply = %s WHERE id = %s", (text, com['id']))
-        c.execute("UPDATE complaints SET resolved_at = %s WHERE id = %s", 
-                  (datetime.datetime.now().strftime("%Y/%m/%d, %H:%M:%S"), com['id']))
-        c.execute("UPDATE complaints SET status = %s WHERE id = %s", ("resolved", com['id']))
+        c.execute("UPDATE complaints SET reply = %s WHERE complaints_id = %s", (text, com['complaints_id']))
+        c.execute("UPDATE complaints SET resolved_at = %s WHERE complaints_id = %s", 
+                  (datetime.datetime.now().strftime("%Y/%m/%d, %H:%M:%S"), com['complaints_id']))
+        c.execute("UPDATE complaints SET status = %s WHERE complaints_id = %s", ("resolved", com['complaints_id']))
         db.commit()
 
-        log_action(g.user['id'], "Complaint Resolved", "complaints", com['id'], {
+        log_action(g.user['user_id'], "Complaint Resolved", "complaints", com['complaints_id'], {
             "reply": text,
             "resolved_at": datetime.datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
         })
@@ -330,7 +333,7 @@ def categories():
     db = get_db()
     c = db.cursor()
     
-    c.execute('SELECT * FROM BOOK_CATEGORIES ORDER BY category_name ASC;')
+    c.execute('SELECT * FROM book_categories ORDER BY category_name ASC;')
     categories_data = c.fetchall()
     
     categories = []
@@ -339,7 +342,7 @@ def categories():
         book_count = c.fetchone()[0]
         
         categories.append({
-            'id': category[0],
+            'category_id': category[0],
             'name': category[1],
             'description': category[2],
             'book_count': book_count
@@ -364,14 +367,14 @@ def new_category():
             
             try:
                 c.execute(
-                    "INSERT INTO BOOK_CATEGORIES (category_name, description) VALUES (%s, %s)",
+                    "INSERT INTO book_categories (category_name, description) VALUES (%s, %s)",
                     (category_name, category_description)
                 )
                 db.commit()
                 
                 c.execute("SELECT LAST_INSERT_ID()")
                 category_id = c.fetchone()[0]
-                log_action(g.user['id'], "Category Added", "categories", category_id, {
+                log_action(g.user['user_id'], "Category Added", "categories", category_id, {
                     "name": category_name,
                     "description": category_description
                 })
@@ -389,7 +392,7 @@ def update_category(category_id):
     db = get_db()
     c = db.cursor()
     
-    c.execute('SELECT * FROM BOOK_CATEGORIES WHERE category_id = %s', (category_id,))
+    c.execute('SELECT * FROM book_categories WHERE category_id = %s', (category_id,))
     category = c.fetchone()
     
     if category is None:
@@ -407,12 +410,12 @@ def update_category(category_id):
         if error is None:
             try:
                 c.execute(
-                    "UPDATE BOOK_CATEGORIES SET category_name = %s, description = %s WHERE category_id = %s",
+                    "UPDATE book_categories SET category_name = %s, description = %s WHERE category_id = %s",
                     (category_name, category_description, category_id)
                 )
                 db.commit()
                 
-                log_action(g.user['id'], "Category Updated", "categories", category_id, {
+                log_action(g.user['user_id'], "Category Updated", "categories", category_id, {
                 "name": category_name,
                 "description": category_description
                 })
@@ -423,9 +426,9 @@ def update_category(category_id):
         flash(error)
     
     category_dict = {
-        'id': category[0],
-        'name': category[1],
-        'description': category[2]
+        'category_id': category[0],
+        'category_name': category[1],
+        'category_description': category[2]
     }
     
     return render_template('librarian/update_category.html', category=category_dict)
@@ -444,10 +447,10 @@ def delete_category(category_id):
         return redirect(url_for('librarian.categories'))
     
     try:
-        c.execute('DELETE FROM BOOK_CATEGORIES WHERE category_id = %s', (category_id,))
+        c.execute('DELETE FROM book_categories WHERE category_id = %s', (category_id,))
         db.commit()
         
-        log_action(g.user['id'], "Category Deleted", "categories", category_id, {
+        log_action(g.user['user_id'], "Category Deleted", "categories", category_id, {
             "name": category_name
         })
         flash('Category has been deleted successfully')
@@ -481,9 +484,9 @@ def logs():
             l.details, 
             l.timestamp
         FROM 
-            SYSTEM_LOGS l
+            systen_logs l
         LEFT JOIN 
-            users u ON l.user_id = u.id
+            users u ON l.user_id = u.user_id
         WHERE 1=1
     """
     params = []
@@ -513,10 +516,10 @@ def logs():
     log_data = c.fetchall()
     
     # Get distinct action types and entity types for filter dropdowns
-    c.execute("SELECT DISTINCT action FROM SYSTEM_LOGS ORDER BY action")
+    c.execute("SELECT DISTINCT action FROM systen_logs ORDER BY action")
     actions = [row[0] for row in c.fetchall()]
     
-    c.execute("SELECT DISTINCT entity_type FROM SYSTEM_LOGS ORDER BY entity_type")
+    c.execute("SELECT DISTINCT entity_type FROM systen_logs ORDER BY entity_type")
     entity_types = [row[0] for row in c.fetchall()]
     
     logs = []
@@ -525,7 +528,7 @@ def logs():
         details = json.loads(log[6]) if log[6] else {}
         
         logs.append({
-            'id': log[0],
+            'log_id': log[0],
             'user_id': log[1],
             'username': log[2] or 'System',
             'action': log[3],

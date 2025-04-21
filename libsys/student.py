@@ -43,18 +43,18 @@ def bookresult():
     db = get_db()
     c = db.cursor()
     if request.method == 'POST':
-        id = request.form['id']
+        book_id = request.form['book_id']
 
         u = session.get('user_id', None)
-        c.execute("INSERT INTO borrows (student_id, book_id, borrow_date, return_date) "
+        c.execute("INSERT INTO borrows (user_id, book_id, borrow_date, return_date) "
                   "VALUES (%s, %s, %s, NULL)", 
-                  (u, id, datetime.now().strftime("%Y/%m/%d, %H:%M:%S")))
-        c.execute("UPDATE books SET copies = copies - 1 WHERE id = %s", (id,))
+                  (u, book_id, datetime.now().strftime("%Y/%m/%d, %H:%M:%S")))
+        c.execute("UPDATE books SET copies = copies - 1 WHERE id = %s", (book_id,))
         db.commit()
         
         c.execute("SELECT LAST_INSERT_ID()")
         borrow_id = c.fetchone()[0]
-        log_action(u, "Book Borrowed", "books", id, {
+        log_action(u, "Book Borrowed", "books", book_id, {
             "borrow_id": borrow_id,
             "borrow_date": datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
         })
@@ -94,7 +94,7 @@ def bookresult():
         
         for b in bs:
             books.append({
-                'id': b[0],
+                'book_id': b[0],
                 'title': b[1],
                 'author': b[2],
                 'year': b[3],
@@ -112,11 +112,11 @@ def bookreturn():
     db = get_db()
     c = db.cursor()
     if request.method == 'POST':
-        id = request.form['id']
+        user_id = request.form['user_id']
         book_id = request.form['book_id']
-        c.execute("UPDATE borrows SET return_date = %s WHERE id = %s", 
-                  (datetime.now().strftime("%Y/%m/%d, %H:%M:%S"), id))
-        c.execute("UPDATE books SET copies = copies + 1 WHERE id = %s", (book_id,))
+        c.execute("UPDATE borrows SET return_date = %s WHERE user_id = %s", 
+                  (datetime.now().strftime("%Y/%m/%d, %H:%M:%S"), user_id))
+        c.execute("UPDATE books SET copies = copies + 1 WHERE book_id = %s", (book_id,))
         db.commit()
 
         log_action(u, "Book Returned", "books", book_id, {
@@ -132,9 +132,9 @@ def bookreturn():
             books.title AS book_title  -- 添加书名作为新列
         FROM borrows
         INNER JOIN books 
-            ON borrows.book_id = books.id  -- 通过 book_id 关联书籍表
+            ON borrows.book_id = books.book_id  -- 通过 book_id 关联书籍表
         WHERE 
-            borrows.student_id = %s  -- 筛选指定用户
+            borrows.user_id = %s  -- 筛选指定用户
         ORDER BY borrows.borrow_date DESC;  -- 按借阅日期降序排列（可选）
     """, (u,))
 
@@ -144,8 +144,8 @@ def bookreturn():
     for b in bs:
         if b[4] == None:
             borrows.append({
-                'id': b[0],
-                'student_id': b[1],
+                'borrow_id': b[0],
+                'user_id': b[1],
                 'book_id': b[2],
                 'borrow_date': b[3],
                 'return_date': b[4],
@@ -153,8 +153,8 @@ def bookreturn():
             })
         else:
             history_borrows.append({
-                'id': b[0],
-                'student_id': b[1],
+                'borrow_id': b[0],
+                'user_id': b[1],
                 'book_id': b[2],
                 'borrow_date': b[3],
                 'return_date': b[4],
@@ -177,7 +177,7 @@ def complaint():
             db = get_db()
             c = db.cursor()
             u = session.get('user_id')
-            c.execute("INSERT INTO complaints (student_id, title, content, status, created_at, resolved_at, reply) VALUES " \
+            c.execute("INSERT INTO complaints (user_id, title, content, status, created_at, resolved_at, reply) VALUES " \
                       "(%s, %s, %s, %s, %s, NULL, NULL)",
                       (u, complaint_title, complaint_text, 'open', datetime.now().strftime("%Y/%m/%d, %H:%M:%S"))
                       )

@@ -116,10 +116,10 @@
                                     <td>{{ log.entity_type }} #{{ log.entity_id }}</td>
                                     <td>
                                         {% if log.details %}
-                                        <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#log-details-{{ log.id }}">
+                                        <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#log-details-{{ log.log_id }}">
                                             <i class="bi bi-info-circle"></i> View
                                         </button>
-                                        <div class="collapse mt-2" id="log-details-{{ log.id }}">
+                                        <div class="collapse mt-2" id="log-details-{{ log.log_id }}">
                                             <div class="card card-body">
                                                 <pre>{{ log.details|tojson(indent=2) }}</pre>
                                             </div>

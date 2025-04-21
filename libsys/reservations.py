@@ -19,7 +19,7 @@ def reserve(book_id):
     c = db.cursor()
     
     # Check if the book exists
-    c.execute("SELECT * FROM books WHERE id = %s", (book_id,))
+    c.execute("SELECT * FROM books WHERE book_id = %s", (book_id,))
     book = c.fetchone()
     
     if book is None:
@@ -28,8 +28,8 @@ def reserve(book_id):
     
     # Check if the user already has an active reservation for this book
     c.execute(
-        "SELECT * FROM BOOK_RESERVATIONS WHERE user_id = %s AND book_id = %s AND status = 'pending'",
-        (g.user['id'], book_id)
+        "SELECT * FROM book_reservations WHERE user_id = %s AND book_id = %s AND status = 'pending'",
+        (g.user['user_id'], book_id)
     )
     existing_reservation = c.fetchone()
     
@@ -39,8 +39,8 @@ def reserve(book_id):
     
     # Check if the user is currently borrowing this book
     c.execute(
-        "SELECT * FROM borrows WHERE student_id = %s AND book_id = %s AND return_date IS NULL",
-        (g.user['id'], book_id)
+        "SELECT * FROM borrows WHERE user_id = %s AND book_id = %s AND return_date IS NULL",
+        (g.user['user_id'], book_id)
     )
     active_borrow = c.fetchone()
     
@@ -54,8 +54,8 @@ def reserve(book_id):
         
         try:
             c.execute(
-                "INSERT INTO BOOK_RESERVATIONS (user_id, book_id, reservation_date, expiry_date, status) VALUES (%s, %s, %s, %s, %s)",
-                (g.user['id'], book_id, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
+                "INSERT INTO book_reservations (user_id, book_id, reservation_date, expiry_date, status) VALUES (%s, %s, %s, %s, %s)",
+                (g.user['user_id'], book_id, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
                  expiry_date.strftime("%Y-%m-%d %H:%M:%S"), 'pending')
             )
             db.commit()
@@ -63,7 +63,7 @@ def reserve(book_id):
             
             c.execute("SELECT LAST_INSERT_ID()")
             reservation_id = c.fetchone()[0]
-            log_action(g.user['id'], "Book Reserved", "books", book_id, {
+            log_action(g.user['user_id'], "Book Reserved", "books", book_id, {
                 "reservation_id": reservation_id,
                 "expiry_date": expiry_date.strftime("%Y-%m-%d %H:%M:%S")
             })
@@ -74,14 +74,14 @@ def reserve(book_id):
     
     # Fetch book details for display
     c.execute(
-        "SELECT books.*, BOOK_CATEGORIES.category_name FROM books LEFT JOIN BOOK_CATEGORIES "
-        "ON books.category_id = BOOK_CATEGORIES.category_id WHERE books.id = %s",
+        "SELECT books.*, book_categories.category_name FROM books LEFT JOIN book_categories "
+        "ON books.category_id = book_categories.category_id WHERE books.id = %s",
         (book_id,)
     )
     book_details = c.fetchone()
     
     book_info = {
-        'id': book_details[0],
+        'book_id': book_details[0],
         'title': book_details[1],
         'author': book_details[2],
         'year': book_details[3],
@@ -108,21 +108,21 @@ def my_reservations():
             b.author,
             b.copies
         FROM 
-            BOOK_RESERVATIONS r
+            book_reservations r
         JOIN 
-            books b ON r.book_id = b.id
+            books b ON r.book_id = b.book_id
         WHERE 
             r.user_id = %s
         ORDER BY 
             r.reservation_date DESC
-    """, (g.user['id'],))
+    """, (g.user['user_id'],))
     
     reservation_data = c.fetchall()
     
     reservations = []
     for r in reservation_data:
         reservations.append({
-            'id': r[0],
+            'reservation_id': r[0],
             'user_id': r[1],
             'book_id': r[2],
             'reservation_date': r[3],
@@ -144,8 +144,8 @@ def cancel(reservation_id):
     
     # Verify that the reservation belongs to the current user
     c.execute(
-        "SELECT * FROM BOOK_RESERVATIONS WHERE reservation_id = %s AND user_id = %s",
-        (reservation_id, g.user['id'])
+        "SELECT * FROM book_reservations WHERE reservation_id = %s AND user_id = %s",
+        (reservation_id, g.user['user_id'])
     )
     reservation = c.fetchone()
     
@@ -156,13 +156,13 @@ def cancel(reservation_id):
     # Cancel the reservation
     try:
         c.execute(
-            "UPDATE BOOK_RESERVATIONS SET status = 'cancelled' WHERE reservation_id = %s",
+            "UPDATE book_reservations SET status = 'cancelled' WHERE reservation_id = %s",
             (reservation_id,)
         )
         db.commit()
         flash("Reservation cancelled successfully.")
 
-        log_action(g.user['id'], "Reservation Cancelled", "books", reservation[2], {
+        log_action(g.user['user_id'], "Reservation Cancelled", "books", reservation[2], {
             "reservation_id": reservation_id
         })
     except mysql.connector.Error as e:

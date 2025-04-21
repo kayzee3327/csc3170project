@@ -96,7 +96,7 @@
                                         </span>
                                     </p>
                                     
-                                    <form method="post" action="{{ url_for('reservations.cancel', reservation_id=res['id']) }}">
+                                    <form method="post" action="{{ url_for('reservations.cancel', reservation_id=res['reservation_id']) }}">
                                         <button 
                                             type="submit" 
                                             class="btn btn-danger position-absolute end-0 bottom-0"

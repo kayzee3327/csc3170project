@@ -78,10 +78,10 @@
                                 {{ borrow['title'] }}
                             </div>
                             <p class="text-muted">
-                                Borrowed At：{{ borrow['borrow_date'] }}
+                                Borrowed At:{{ borrow['borrow_date'] }}
                             </p>
                             <form method="post">
-                                <input type="hidden" name="id" value="{{ borrow['id'] }}">
+                                <input type="hidden" name="user_id" value="{{ borrow['user_id'] }}">
                                 <input type="hidden" name="book_id" value="{{ borrow['book_id'] }}">
                                 <button
                                 type="submit"
@@ -110,10 +110,10 @@
                                 {{ history['title'] }}
                             </div>
                             <div class="text-muted">
-                                Borrowed At：{{ history['borrow_date'] }}
+                                Borrowed At:{{ history['borrow_date'] }}
                             </div>
                             <div class="text-primary">
-                                Returned At：{{ history['return_date'] }}
+                                Returned At:{{ history['return_date'] }}
                             </div>
                         </div>
                         {% endfor %} {% if not history_borrows %}

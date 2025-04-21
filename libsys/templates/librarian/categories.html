@@ -83,12 +83,12 @@
                                 Number of book under this category:{{ category['book_count'] }}
                             </p>
                             <div class="d-flex position-absolute end-0 bottom-0">
-                                <a href="{{ url_for('librarian.update_category', category_id=category['id']) }}" 
+                                <a href="{{ url_for('librarian.update_category', category_id=category['category_id']) }}" 
                                    class="btn btn-warning me-2">
                                     Edit
                                 </a>
                                 {% if category['book_count'] == 0 %}
-                                <form method="post" action="{{ url_for('librarian.delete_category', category_id=category['id']) }}"
+                                <form method="post" action="{{ url_for('librarian.delete_category', category_id=category['category_id']) }}"
                                       onsubmit="return confirm('Delete this category?');">
                                     <button type="submit" class="btn btn-danger">Delete</button>
                                 </form>

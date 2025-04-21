@@ -73,7 +73,7 @@
                                     {{ complaint['created_at'] }}
                                 </p>
                             <form method="post">
-                                <input type="hidden" name="id" value="{{ complaint['id'] }}">
+                                <input type="hidden" name="id" value="{{ complaint['complaint_id'] }}">
                                 <input type="hidden" name="title" value="{{ complaint['title'] }}">
                                 <input type="hidden" name="content" value="{{ complaint['content'] }}">
                                 <button type="submit" class="btn btn-primary position-absolute end-0 bottom-0">

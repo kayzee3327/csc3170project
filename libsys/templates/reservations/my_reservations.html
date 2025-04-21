@@ -44,7 +44,7 @@
                     </li>
                     {% endif %}
                     <li>
-                        <a
+                        
                             class="btn btn-outline-dark"
                             href="{{ url_for('auth.logout') }}"
                         >
@@ -55,90 +55,109 @@
             </div>
         </nav>
 
-        <div class="content-wrapper" style="justify-content: center">
-            <div class="result-card container">
-                <div class="search-body">
-                    <div class="mb-4 justify-content-between d-flex">
-                        <h1>MY RESERVATIONS</h1>
-                        <a class="btn" href="{{ url_for('index') }}">
+        <div class="content-wrapper">
+            <div class="container">
+                <div class="row mb-4 justify-content-between">
+                    <div class="col-md-8">
+                        <h1 class="text-white">MY RESERVATIONS</h1>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a class="btn bg-white" href="{{ url_for('index') }}">
                             <i class="bi bi-arrow-90deg-left fs-3"></i>
                         </a>
                     </div>
+                </div>
 
-                    {% for message in get_flashed_messages() %}
-                    <div class="alert alert-warning">{{ message }}</div>
-                    {% endfor %}
-
-                    <div class="container">
-                        <h3 class="mb-3">Active Reservations</h3>
-                        {% set active_reservations = false %}
-                        
-                        {% for res in reservations %}
-                            {% if res['status'] == 'pending' %}
-                                {% set active_reservations = true %}
-                                <div class="border-top pt-3 position-relative mb-4">
-                                    <div class="navbar-brand text-secondary-emphasis fs-2">
-                                        {{ res['title'] }}
-                                    </div>
-                                    <p class="text-muted">Author: {{ res['author'] }}</p>
-                                    <div class="d-flex justify-content-between">
-                                        <p class="text-muted">Reserved on: {{ res['reservation_date'] }}</p>
-                                        <p class="text-muted">Expires on: {{ res['expiry_date'] }}</p>
-                                    </div>
-                                    <p class="text-muted">
-                                        Status: 
-                                        <span class="badge bg-primary">
-                                            {% if res['copies'] > 0 %}
-                                                Ready for pickup
-                                            {% else %}
-                                                Waiting for availability
-                                            {% endif %}
-                                        </span>
-                                    </p>
-                                    
-                                    <form method="post" action="{{ url_for('reservations.cancel', reservation_id=res['reservation_id']) }}">
-                                        <button 
-                                            type="submit" 
-                                            class="btn btn-danger position-absolute end-0 bottom-0"
-                                            onclick="return confirm('Are you sure you want to cancel this reservation?')">
-                                            Cancel Reservation
-                                        </button>
-                                    </form>
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-                        
-                        {% if not active_reservations %}
-                            <p class="text-muted border-top pt-3">You have no active reservations.</p>
-                        {% endif %}
-                        
-                        <h3 class="mt-5 mb-3">Reservation History</h3>
-                        {% set has_history = false %}
-                        
-                        {% for res in reservations %}
-                            {% if res['status'] != 'pending' %}
-                                {% set has_history = true %}
-                                <div class="border-top pt-3 position-relative mb-4">
-                                    <div class="navbar-brand text-secondary-emphasis fs-2">
-                                        {{ res['title'] }}
-                                    </div>
-                                    <p class="text-muted">Author: {{ res['author'] }}</p>
-                                    <div class="d-flex justify-content-between">
-                                        <p class="text-muted">Reserved on: {{ res['reservation_date'] }}</p>
-                                        <p class="text-muted">
-                                            Status: 
-                                            <span class="badge {{ 'bg-success' if res['status'] == 'fulfilled' else 'bg-secondary' }}">
-                                                {{ res['status']|capitalize }}
-                                            </span>
-                                        </p>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-                        
-                        {% if not has_history %}
-                            <p class="text-muted border-top pt-3">You have no reservation history.</p>
-                        {% endif %}
+                {% for message in get_flashed_messages() %}
+                <div class="alert alert-warning">{{ message }}</div>
+                {% endfor %}
+                
+                <!-- 活动预约卡片 -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="search-card">
+                            <div class="search-body">
+                                <h3 class="mb-3">Active Reservations</h3>
+                                
+                                {% set active_reservations = false %}
+                                
+                                {% for res in reservations %}
+                                    {% if res['status'] == 'pending' %}
+                                        {% set active_reservations = true %}
+                                        <div class="border-top pt-3 position-relative mb-4">
+                                            <div class="navbar-brand text-secondary-emphasis fs-2">
+                                                {{ res['title'] }}
+                                            </div>
+                                            <p class="text-muted">Author: {{ res['author'] }}</p>
+                                            <div class="d-flex justify-content-between">
+                                                <p class="text-muted">Reserved on: {{ res['reservation_date'] }}</p>
+                                                <p class="text-muted">Expires on: {{ res['expiry_date'] }}</p>
+                                            </div>
+                                            <p class="text-muted">
+                                                Status: 
+                                                <span class="badge bg-primary">
+                                                    {% if res['copies'] > 0 %}
+                                                        Ready for pickup
+                                                    {% else %}
+                                                        Waiting for availability
+                                                    {% endif %}
+                                                </span>
+                                            </p>
+                                            
+                                            <form method="post" action="{{ url_for('reservations.cancel', reservation_id=res['reservation_id']) }}">
+                                                <button 
+                                                    type="submit" 
+                                                    class="btn btn-danger position-absolute end-0 bottom-0"
+                                                    onclick="return confirm('Are you sure you want to cancel this reservation?')">
+                                                    Cancel Reservation
+                                                </button>
+                                            </form>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if not active_reservations %}
+                                    <p class="text-muted border-top pt-3">You have no active reservations.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 预约历史卡片 -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="search-card">
+                            <div class="search-body">
+                                <h3 class="mb-3">Reservation History</h3>
+                                {% set has_history = false %}
+                                
+                                {% for res in reservations %}
+                                    {% if res['status'] != 'pending' %}
+                                        {% set has_history = true %}
+                                        <div class="border-top pt-3 position-relative mb-4">
+                                            <div class="navbar-brand text-secondary-emphasis fs-2">
+                                                {{ res['title'] }}
+                                            </div>
+                                            <p class="text-muted">Author: {{ res['author'] }}</p>
+                                            <div class="d-flex justify-content-between">
+                                                <p class="text-muted">Reserved on: {{ res['reservation_date'] }}</p>
+                                                <p class="text-muted">
+                                                    Status: 
+                                                    <span class="badge {{ 'bg-success' if res['status'] == 'fulfilled' else 'bg-secondary' }}">
+                                                        {{ res['status']|capitalize }}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if not has_history %}
+                                    <p class="text-muted border-top pt-3">You have no reservation history.</p>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

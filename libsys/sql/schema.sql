@@ -28,7 +28,7 @@ CREATE TABLE books (
     book_id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     author VARCHAR(100) NOT NULL,
-    published_year INT CHECK (published_year <= YEAR(CURRENT_DATE)),
+    published_year INT CHECK (published_year <= 2025),
     isbn VARCHAR(20) NOT NULL UNIQUE,
     copies INT NOT NULL DEFAULT 1 CHECK (copies >= 0),
     category_id INT,
@@ -49,8 +49,8 @@ CREATE TABLE borrows (
     due_date DATETIME NOT NULL,
     return_date DATETIME,
     status ENUM('active', 'returned', 'overdue', 'lost') DEFAULT 'active',
-    FOREIGN KEY (user_id) REFERENCES USERS(user_id),
-    FOREIGN KEY (book_id) REFERENCES BOOKS(book_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (book_id) REFERENCES books(book_id),
     INDEX idx_borrows_user (user_id),
     INDEX idx_borrows_book (book_id),
     INDEX idx_borrows_status (status)
@@ -67,8 +67,8 @@ CREATE TABLE complaints (
     resolved_at DATETIME,
     resolved_by INT,
     reply TEXT,
-    FOREIGN KEY (user_id) REFERENCES USERS(user_id),
-    FOREIGN KEY (resolved_by) REFERENCES USERS(user_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (resolved_by) REFERENCES users(user_id),
     INDEX idx_complaints_status (status),
     INDEX idx_complaints_user (user_id)
 );
@@ -81,8 +81,8 @@ CREATE TABLE book_reservations (
     reservation_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     expiry_date DATETIME NOT NULL,
     status ENUM('pending', 'fulfilled', 'cancelled', 'expired') DEFAULT 'pending',
-    FOREIGN KEY (user_id) REFERENCES USERS(user_id),
-    FOREIGN KEY (book_id) REFERENCES BOOKS(book_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (book_id) REFERENCES books(book_id),
     INDEX idx_reservations_user (user_id),
     INDEX idx_reservations_book (book_id),
     INDEX idx_reservations_status (status)
@@ -97,7 +97,7 @@ CREATE TABLE systen_logs (
     entity_id INT,
     details JSON,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES USERS(user_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
     INDEX idx_logs_user (user_id),
     INDEX idx_logs_action (action),
     INDEX idx_logs_timestamp (timestamp)

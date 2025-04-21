@@ -309,15 +309,15 @@ def reply():
         
         db = get_db()
         c = db.cursor()
-        c.execute("UPDATE complaints SET reply = %s WHERE complaint_id = %s", (text, com['complaint_id']))
-        c.execute("UPDATE complaints SET resolved_at = %s WHERE complaint_id = %s", 
-                  (datetime.datetime.now().strftime("%Y/%m/%d, %H:%M:%S"), com['complaint_id']))
-        c.execute("UPDATE complaints SET status = %s WHERE complaint_id = %s", ("resolved", com['complaint_id']))
+        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        c.execute("UPDATE complaints SET reply = %s, status = %s, resolved_at = %s, resolved_by = %s WHERE complaint_id = %s", 
+                  (text, "resolved", now, g.user['user_id'], com['complaint_id']))
         db.commit()
 
         log_action(g.user['user_id'], "Complaint Resolved", "complaints", com['complaint_id'], {
             "reply": text,
-            "resolved_at": datetime.datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
+            "resolved_at": now,
+            "resolved_by": g.user['user_id']
         })
         return redirect(url_for('librarian.complaints'))
 
@@ -438,6 +438,16 @@ def update_category(category_id):
 def delete_category(category_id):
     db = get_db()
     c = db.cursor()
+    
+    # 在删除前获取类别名称
+    c.execute('SELECT category_name FROM book_categories WHERE category_id = %s', (category_id,))
+    category_data = c.fetchone()
+    
+    if category_data is None:
+        flash("Cannot find this category.")
+        return redirect(url_for('librarian.categories'))
+        
+    category_name = category_data[0]
     
     c.execute('SELECT COUNT(*) FROM books WHERE category_id = %s', (category_id,))
     book_count = c.fetchone()[0]

@@ -95,14 +95,20 @@
                                 {{ complaint['content'] }}
                             </div>
                             <div class="text-primary">
-                                Re: {{ complaint['reply'] }}
+                                Reply: {{ complaint['reply'] }}
+                            </div>
+                            <div class="text-primary">
+                                Status: {{ complaint['status'] }}
                             </div>
                             <div class="d-flex justify-content-between">
                                 <div class="mt-1">
                                     Created: {{ complaint['created_at'] }}
                                 </div>
                                 <div class="mt-1">
-                                    Resolved: {{ complaint['resolved_at'] }}
+                                    Resolved at: {{ complaint['resolved_at'] }}
+                                </div>
+                                <div class="mt-1">
+                                    Resolved by: {{ complaint['resolved_by'] }}
                                 </div>
                                 
                             </div>

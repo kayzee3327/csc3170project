@@ -1,5 +1,5 @@
 import mysql.connector
-from datetime import datetime
+from datetime import datetime,timedelta
 
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
@@ -46,9 +46,12 @@ def bookresult():
         book_id = request.form['book_id']
 
         u = session.get('user_id', None)
-        c.execute("INSERT INTO borrows (user_id, book_id, borrow_date, return_date) "
-                  "VALUES (%s, %s, %s, NULL)", 
-                  (u, book_id, datetime.now().strftime("%Y/%m/%d, %H:%M:%S")))
+        now = datetime.now()
+        due_date = now + timedelta(days=7)
+        c.execute("INSERT INTO borrows (user_id, book_id, borrow_date, due_date, return_date, status) "
+                  "VALUES (%s, %s, %s, %s, NULL, 'active')", 
+                  (u, book_id, now.strftime("%Y-%m-%d %H:%M:%S"), 
+                   due_date.strftime("%Y-%m-%d %H:%M:%S")))
         c.execute("UPDATE books SET copies = copies - 1 WHERE book_id = %s", (book_id,))
         db.commit()
         
@@ -56,7 +59,8 @@ def bookresult():
         borrow_id = c.fetchone()[0]
         log_action(u, "Book Borrowed", "books", book_id, {
             "borrow_id": borrow_id,
-            "borrow_date": datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
+            "borrow_date": now.strftime("%Y-%m-%d %H:%M:%S"),
+            "due_date": due_date.strftime("%Y-%m-%d %H:%M:%S")
         })
         
         return redirect(url_for('student.bookresult'))
@@ -114,14 +118,15 @@ def bookreturn():
     if request.method == 'POST':
         user_id = request.form['user_id']
         book_id = request.form['book_id']
-        c.execute("UPDATE borrows SET return_date = %s WHERE user_id = %s", 
-                  (datetime.now().strftime("%Y/%m/%d, %H:%M:%S"), user_id))
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        c.execute("UPDATE borrows SET return_date = %s, status = 'returned' WHERE user_id = %s AND book_id = %s AND return_date IS NULL", 
+                  (now, user_id, book_id))
         c.execute("UPDATE books SET copies = copies + 1 WHERE book_id = %s", (book_id,))
         db.commit()
 
-        log_action(u, "Book Returned", "books", book_id, {
-            "borrow_id": id,
-            "return_date": datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
+        log_action(user_id, "Book Returned", "books", book_id, {
+            "return_date": now,
+            "status": "returned"
         })
         return redirect(url_for('student.bookreturn'))
 
@@ -129,7 +134,7 @@ def bookreturn():
     c.execute("""
         SELECT
             borrows.*,
-            books.title AS book_title  -- 添加书名作为新列
+            books.title  -- 添加书名作为新列
         FROM borrows
         INNER JOIN books 
             ON borrows.book_id = books.book_id  -- 通过 book_id 关联书籍表
@@ -142,14 +147,16 @@ def bookreturn():
     borrows = []
     history_borrows = []
     for b in bs:
-        if b[4] == None:
+        if b[5] == None:
             borrows.append({
                 'borrow_id': b[0],
                 'user_id': b[1],
                 'book_id': b[2],
                 'borrow_date': b[3],
-                'return_date': b[4],
-                'title': b[5]
+                'due_date': b[4],
+                'return_date': b[5],
+                'status': b[6],
+                'title': b[7]
             })
         else:
             history_borrows.append({
@@ -157,8 +164,10 @@ def bookreturn():
                 'user_id': b[1],
                 'book_id': b[2],
                 'borrow_date': b[3],
-                'return_date': b[4],
-                'title': b[5]
+                'due_date': b[4],
+                'return_date': b[5],
+                'status': b[6],
+                'title': b[7]
             })
 
     return render_template('student/return.html', borrows=borrows, history_borrows=history_borrows)

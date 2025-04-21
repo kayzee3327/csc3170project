@@ -80,6 +80,12 @@
                             <p class="text-muted">
                                 Borrowed At:{{ borrow['borrow_date'] }}
                             </p>
+                            <p class="text-muted">
+                                Due Date: {{ borrow['due_date'] }}
+                            </p>
+                            <p class="text-muted">
+                                Status: {{ borrow['status'] }}
+                            </p>
                             <form method="post">
                                 <input type="hidden" name="user_id" value="{{ borrow['user_id'] }}">
                                 <input type="hidden" name="book_id" value="{{ borrow['book_id'] }}">
@@ -112,8 +118,14 @@
                             <div class="text-muted">
                                 Borrowed At:{{ history['borrow_date'] }}
                             </div>
+                            <div class="text-muted">
+                                Due date:{{ history['due_date'] }}
+                            </div>
                             <div class="text-primary">
                                 Returned At:{{ history['return_date'] }}
+                            </div>
+                            <div class="text-muted">
+                                Status:{{ history['status'] }}
                             </div>
                         </div>
                         {% endfor %} {% if not history_borrows %}

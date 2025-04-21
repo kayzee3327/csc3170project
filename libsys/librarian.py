@@ -309,13 +309,13 @@ def reply():
         
         db = get_db()
         c = db.cursor()
-        c.execute("UPDATE complaints SET reply = %s WHERE complaints_id = %s", (text, com['complaints_id']))
-        c.execute("UPDATE complaints SET resolved_at = %s WHERE complaints_id = %s", 
-                  (datetime.datetime.now().strftime("%Y/%m/%d, %H:%M:%S"), com['complaints_id']))
-        c.execute("UPDATE complaints SET status = %s WHERE complaints_id = %s", ("resolved", com['complaints_id']))
+        c.execute("UPDATE complaints SET reply = %s WHERE complaint_id = %s", (text, com['complaint_id']))
+        c.execute("UPDATE complaints SET resolved_at = %s WHERE complaint_id = %s", 
+                  (datetime.datetime.now().strftime("%Y/%m/%d, %H:%M:%S"), com['complaint_id']))
+        c.execute("UPDATE complaints SET status = %s WHERE complaint_id = %s", ("resolved", com['complaint_id']))
         db.commit()
 
-        log_action(g.user['user_id'], "Complaint Resolved", "complaints", com['complaints_id'], {
+        log_action(g.user['user_id'], "Complaint Resolved", "complaints", com['complaint_id'], {
             "reply": text,
             "resolved_at": datetime.datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
         })

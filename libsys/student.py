@@ -49,7 +49,7 @@ def bookresult():
         c.execute("INSERT INTO borrows (user_id, book_id, borrow_date, return_date) "
                   "VALUES (%s, %s, %s, NULL)", 
                   (u, book_id, datetime.now().strftime("%Y/%m/%d, %H:%M:%S")))
-        c.execute("UPDATE books SET copies = copies - 1 WHERE id = %s", (book_id,))
+        c.execute("UPDATE books SET copies = copies - 1 WHERE book_id = %s", (book_id,))
         db.commit()
         
         c.execute("SELECT LAST_INSERT_ID()")

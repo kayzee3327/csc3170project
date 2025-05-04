@@ -16,7 +16,7 @@
         />
         <link
             rel="stylesheet"
-            href=" {{ url_for('static', filename='css/admin.css') }} "
+            href=" {{ url_for('static', filename='css/librarian.css') }} "
         />
     </head>
     <body class="bg-warning-subtle">
@@ -87,12 +87,10 @@
                                    class="btn btn-warning me-2">
                                     Edit
                                 </a>
-                                {% if category['book_count'] == 0 %}
                                 <form method="post" action="{{ url_for('librarian.delete_category', category_id=category['category_id']) }}"
-                                      onsubmit="return confirm('Delete this category?');">
+                                      onsubmit="return confirm('Delete this category and all its books?');">
                                     <button type="submit" class="btn btn-danger">Delete</button>
                                 </form>
-                                {% endif %}
                             </div>
                         </div>
                         {% endfor %}

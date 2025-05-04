@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Library Management System</title>
+        <title>Library Usage Reports</title>
         <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
             rel="stylesheet"
@@ -16,7 +16,7 @@
         />
         <link
             rel="stylesheet"
-            href=" {{ url_for('static', filename='css/admin.css') }} "
+            href=" {{ url_for('static', filename='css/librarian.css') }} "
         />
     </head>
     <body class="bg-warning-subtle">
@@ -54,46 +54,273 @@
             </div>
         </nav>
 
-        <div class="content-wrapper" style="justify-content: center">
-            <div class="catalog-card ms-3 me-3">
+        <div class="content-wrapper">
+            <div class="catalog-card mx-auto" style="max-width: 1000px;"
                 <div class="login-body">
-                    <div class="list-group">
-                        <div class="mb-4 justify-content-between d-flex">
-                            <h1>USAGE REPORT</h1>
-                            <a
-                                class="btn"
-                                href="{{ url_for('librarian.index') }}"
-                            >
-                                <i class="bi bi-arrow-90deg-left fs-3"></i>
-                            </a>
-                        </div>
-                        {% for book in books %}
-                        <div
-                            class="list-group-item list-group-item-action"
-                        >
-                            <div class="d-flex w-100 justify-content-between">
-                                <h3 class="mb-1">{{ book['title'] }}</h3>
-                                {% if not book['nearest'] %}
-                                <small>Never Borrowed </small>
-                                {% else %}
-                                <small
-                                    >Last borrowed: {{ book['nearest'] }} days
-                                    ago</small
-                                >
+                    <!-- Navigation Tabs -->
+                    <div class="mb-4 justify-content-between d-flex">
+                        <h1>Library Data Analysis</h1>
+                        <a class="btn" href="{{ url_for('librarian.index') }}">
+                            <i class="bi bi-arrow-90deg-left fs-3"></i>
+                        </a>
+                    </div>
+                    
+                    <ul class="nav nav-tabs mb-4" id="analysisTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="books-tab" data-bs-toggle="tab" data-bs-target="#books" type="button" role="tab" aria-controls="books" aria-selected="true">Book Borrowing Status</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="false">User Borrowing Patterns</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="categories-tab" data-bs-toggle="tab" data-bs-target="#categories" type="button" role="tab" aria-controls="categories" aria-selected="false">Category Borrowing Trends</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="popularity-tab" data-bs-toggle="tab" data-bs-target="#popularity" type="button" role="tab" aria-controls="popularity" aria-selected="false">Popular and Slow-Moving Books</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="seasonal-tab" data-bs-toggle="tab" data-bs-target="#seasonal" type="button" role="tab" aria-controls="seasonal" aria-selected="false">Seasonal Borrowing Analysis</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="analysisTabContent">
+                        <!-- Book Borrowing Status -->
+                        <div class="tab-pane fade show active" id="books" role="tabpanel" aria-labelledby="books-tab">
+                            <h3 class="mb-3">Book Borrowing Overview</h3>
+                            <div class="list-group">
+                                {% for book in books %}
+                                <div class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h3 class="mb-1">{{ book['title'] }}</h3>
+                                        {% if not book['nearest'] %}
+                                        <small>Never borrowed</small>
+                                        {% else %}
+                                        <small>Last borrowed: {{ book['nearest'] }} days ago</small>
+                                        {% endif %}
+                                    </div>
+                                    <p class="mb-1">
+                                        Total borrows: {{ book['total'] }}
+                                    </p>
+                                    <p class="mb-1">
+                                        Available copies: {{ book['copies'] }}
+                                    </p>
+                                </div>
+                                {% endfor %}
+                                {% if not books %}
+                                <h3 class="border-top pt-3 text-body-tertiary">
+                                    No records
+                                </h3>
                                 {% endif %}
                             </div>
-                            <p class="mb-1">
-                                Total borrowed times: {{ book['total'] }}
-                            </p>
-                            <p class="mb-1">
-                                Copies Available: {{ book['copies'] }}
-                            </p>
                         </div>
-                        {% endfor %} {% if not books %}
-                        <h3 class="border-top pt-3 text-body-tertiary">
-                            No record
-                        </h3>
-                        {% endif %}
+                        
+                        <!-- User Borrowing Patterns -->
+                        <div class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="users-tab">
+                            <h3 class="mb-3">User Borrowing Pattern Analysis</h3>
+                            <p class="text-muted mb-4">Below are the most active readers in the system and analysis of their borrowing habits</p>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Total Borrows</th>
+                                            <th>Average Borrowing Days</th>
+                                            <th>Number of Categories</th>
+                                            <th>User Preference Analysis</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for user in user_patterns %}
+                                        <tr>
+                                            <td>{{ user['full_name'] }}</td>
+                                            <td>{{ user['total_borrows'] }}</td>
+                                            <td>{{ "%.1f"|format(user['avg_borrow_days']) }}</td>
+                                            <td>{{ user['different_categories'] }}</td>
+                                            <td>
+                                                {% if user['avg_borrow_days'] < 7 %}
+                                                <span class="badge bg-success">Quick Reader</span>
+                                                {% elif user['avg_borrow_days'] > 14 %}
+                                                <span class="badge bg-warning">Deep Reader</span>
+                                                {% else %}
+                                                <span class="badge bg-info">Medium Reader</span>
+                                                {% endif %}
+                                                
+                                                {% if user['different_categories'] > 3 %}
+                                                <span class="badge bg-primary">Wide Interests</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">Focused Reader</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        
+                                        {% if not user_patterns %}
+                                        <tr>
+                                            <td colspan="5" class="text-center">No user borrowing data available</td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Category Borrowing Trends -->
+                        <div class="tab-pane fade" id="categories" role="tabpanel" aria-labelledby="categories-tab">
+                            <h3 class="mb-3">Book Category Borrowing Trend Analysis</h3>
+                            <p class="text-muted mb-4">Shows the popularity of books in each category</p>
+                            
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Category Borrowing Proportion</h5>
+                                    <div class="progress" style="height: 2rem;">
+                                        {% for category in category_trends %}
+                                        {% set colors = ['bg-primary', 'bg-success', 'bg-info', 'bg-warning', 'bg-danger', 'bg-secondary'] %}
+                                        <div class="progress-bar {{ colors[loop.index0 % 6] }}" role="progressbar" 
+                                             style="width: {{ category['percentage'] }}%;" 
+                                             aria-valuenow="{{ category['percentage'] }}" aria-valuemin="0" aria-valuemax="100"
+                                             data-bs-toggle="tooltip" data-bs-placement="top" 
+                                             title="{{ category['category_name'] }}: {{ "%.1f"|format(category['percentage']) }}%">
+                                            {% if category['percentage'] > 8 %}
+                                            {{ category['category_name'] }}
+                                            {% endif %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Category</th>
+                                            <th>Borrow Count</th>
+                                            <th>Percentage of Total Borrows</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for category in category_trends %}
+                                        <tr>
+                                            <td>{{ category['category_name'] }}</td>
+                                            <td>{{ category['borrow_count'] }}</td>
+                                            <td>{{ "%.1f"|format(category['percentage']) }}%</td>
+                                        </tr>
+                                        {% endfor %}
+                                        
+                                        {% if not category_trends %}
+                                        <tr>
+                                            <td colspan="3" class="text-center">No category borrowing data available</td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Popular and Slow-Moving Books -->
+                        <div class="tab-pane fade" id="popularity" role="tabpanel" aria-labelledby="popularity-tab">
+                            <h3 class="mb-3">Book Popularity Analysis</h3>
+                            <p class="text-muted mb-4">Analysis of book popularity based on the ratio of borrow count to available copies</p>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Author</th>
+                                            <th>Borrow Count</th>
+                                            <th>Copies</th>
+                                            <th>Efficiency Ratio</th>
+                                            <th>Last Borrowed</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for book in book_popularity %}
+                                        <tr>
+                                            <td>{{ book['title'] }}</td>
+                                            <td>{{ book['author'] }}</td>
+                                            <td>{{ book['borrow_count'] }}</td>
+                                            <td>{{ book['copies'] }}</td>
+                                            <td>{{ "%.2f"|format(book['efficiency_ratio']) }}</td>
+                                            <td>
+                                                {% if book['days_since_last_borrow'] %}
+                                                {{ book['days_since_last_borrow'] }} days ago
+                                                {% else %}
+                                                Never borrowed
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if book['efficiency_ratio'] > 5 %}
+                                                <span class="badge bg-danger">Hot Shortage</span>
+                                                {% elif book['efficiency_ratio'] > 3 %}
+                                                <span class="badge bg-warning">Very Popular</span>
+                                                {% elif book['efficiency_ratio'] > 1 %}
+                                                <span class="badge bg-success">Popular</span>
+                                                {% elif book['efficiency_ratio'] > 0.5 %}
+                                                <span class="badge bg-info">Average</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">Low Demand</span>
+                                                {% endif %}
+                                                
+                                                {% if book['days_since_last_borrow'] and book['days_since_last_borrow'] > 90 %}
+                                                <span class="badge bg-dark">Long Idle</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        
+                                        {% if not book_popularity %}
+                                        <tr>
+                                            <td colspan="7" class="text-center">No book borrowing data available</td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Seasonal Borrowing Analysis -->
+                        <div class="tab-pane fade" id="seasonal" role="tabpanel" aria-labelledby="seasonal-tab">
+                            <h3 class="mb-3">Seasonal Borrowing Pattern Analysis</h3>
+                            <p class="text-muted mb-4">Analysis of borrowing preferences in different seasons</p>
+                            
+                            <div class="row">
+                                {% for season, categories in seasonal_patterns.items() %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-header 
+                                            {% if season == 'Spring' %}
+                                            bg-success text-white
+                                            {% elif season == 'Summer' %}
+                                            bg-danger text-white
+                                            {% elif season == 'Fall' %}
+                                            bg-warning
+                                            {% elif season == 'Winter' %}
+                                            bg-info
+                                            {% endif %}">
+                                            <h5 class="card-title mb-0">{{ season }}</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            {% if categories %}
+                                            <ul class="list-group list-group-flush">
+                                                {% for item in categories[:5] %}
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    {{ item['category'] }}
+                                                    <span class="badge bg-primary rounded-pill">{{ item['borrow_count'] }}</span>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                            {% else %}
+                                            <p class="text-muted text-center">No borrowing data available for this season</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -104,5 +331,12 @@
             integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq"
             crossorigin="anonymous"
         ></script>
+        <script>
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        </script>
     </body>
 </html>

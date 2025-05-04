@@ -26,7 +26,7 @@ def index():
 def catalog():
     if request.method == 'POST':
         book = {
-            key: request.form[key] for key in ['book_id', 'title', 'author', 'published_year', 'isbn', 'copies']
+            key: request.form[key] for key in ['book_id', 'title', 'author', 'year', 'isbn', 'copies', 'category_id', 'category_name']
         }
         session['book-to-update'] = book
         return redirect(url_for('librarian.update'))
@@ -37,28 +37,36 @@ def catalog():
 
     c.execute('''
         SELECT 
-            books.*, 
-            book_categories.category_name 
+            books.book_id, books.title, books.author, books.published_year, 
+            books.isbn, books.copies, books.category_id, 
+            book_categories.category_name, 
+            COUNT(borrows.borrow_id) AS borrow_count
         FROM 
             books 
         LEFT JOIN 
             book_categories ON books.category_id = book_categories.category_id 
+        LEFT JOIN
+            borrows ON books.book_id = borrows.book_id
+        GROUP BY
+            books.book_id, books.title, books.author, books.published_year, 
+            books.isbn, books.copies, books.category_id, book_categories.category_name
         ORDER BY 
             books.title ASC;
     ''')
     b = c.fetchall()
 
     books = []
-    for book in b:
+    for book_row in b: # 使用不同的变量名避免混淆
         books.append({
-            'book_id': book[0],
-            'title': book[1],
-            'author': book[2],
-            'year': book[3],
-            'isbn': book[4],
-            'copies': book[5],
-            'category_id': book[6],
-            'category_name': book[7] if book[7] else 'Undefined'
+            'book_id': book_row[0],
+            'title': book_row[1],
+            'author': book_row[2],
+            'year': book_row[3],
+            'isbn': book_row[4],
+            'copies': book_row[5],
+            'category_id': book_row[6],
+            'category_name': book_row[7] if book_row[7] else 'Undefined',
+            'borrow_count': book_row[8]
         })
     return render_template('librarian/catalog.html', books=books)
 
@@ -97,7 +105,7 @@ def newitem():
     for category in categories_data:
         categories.append({
             'category_id': category[0],
-            'name': category[1]
+            'category_name': category[1]
         })
     
     return render_template('librarian/newitem.html', categories=categories)
@@ -164,51 +172,186 @@ def update():
 @admin_login_required
 def delete():
     b = session.get('book-to-update')
+    if not b:
+        flash("Cannot find the book to delete")
+        return redirect(url_for("librarian.catalog"))
     
     db = get_db()
     c = db.cursor()
-    c.execute("DELETE FROM books where book_id = %s", (b['book_id'],))
-    db.commit()
-
-    log_action(g.user['user_id'], "Book Deleted", "books", b['book_id'], {
-        "title": b['title'],
-        "author": b['author'],
-        "isbn": b['isbn']
-    })
-    return redirect(url_for("librarian.catalog"))
-
-
-@bp.route('/inventory', methods=['GET', 'POST'])
-@admin_login_required
-def inventory():
-    if request.method == 'POST':
-        pass
-    db = get_db()
-    c = db.cursor()
-
-    c.execute('SELECT * FROM books ORDER BY title ASC;')
-    b = c.fetchall()
-
-    books = []
-    for book in b:
-        books.append({
-            'book_id': book[0],
-            'title': book[1],
-            'author': book[2],
-            'year': book[3],
-            'isbn': book[4],
-            'copies': book[5]
+    
+    try:
+        # 首先检查这本书是否有借阅记录
+        c.execute("SELECT COUNT(*) FROM borrows WHERE book_id = %s", (b['book_id'],))
+        borrow_count = c.fetchone()[0]
+        
+        if borrow_count > 0:
+            flash(f"Cannot delete {b['title']}:it has {borrow_count} borrow records。Please delete these records first.")
+            return redirect(url_for("librarian.catalog"))
+        
+        # 检查是否有预约记录
+        c.execute("SELECT COUNT(*) FROM book_reservations WHERE book_id = %s", (b['book_id'],))
+        reservation_count = c.fetchone()[0]
+        
+        if reservation_count > 0:
+            flash(f"Cannot delete {b['title']}: it has {reservation_count} reservation records. Please delete these records first")
+            return redirect(url_for("librarian.catalog"))
+        
+        # 如果没有关联记录，则可以安全删除
+        c.execute("DELETE FROM books WHERE book_id = %s", (b['book_id'],))
+        db.commit()
+        
+        log_action(g.user['user_id'], "Book Deleted", "books", b['book_id'], {
+            "title": b['title'],
+            "author": b['author'],
+            "isbn": b['isbn']
         })
-    return render_template('librarian/inventory.html', books=books)
+        
+        flash(f"{b['title']} has been deleted successfully")
+        
+    except mysql.connector.errors.IntegrityError as e:
+        db.rollback()
+        # 提取错误详情并显示友好消息
+        flash(f"Cannot delete{b['title']} : it has related records. Please delete all its borrows and reservations first.")
+        
+    except Exception as e:
+        db.rollback()
+        flash(f"Delete error: {str(e)}")
+    
+    return redirect(url_for("librarian.catalog"))
 
 @bp.route('/usage', methods=['GET', 'POST'])
 @admin_login_required
 def usage():
-    if request.method == 'POST':
-        pass
-    
     db = get_db()
     c = db.cursor()
+    
+    # 1. 用户借阅模式分析
+    c.execute("""
+        SELECT 
+            u.user_id, 
+            u.full_name,
+            COUNT(b.borrow_id) AS total_borrows,
+            AVG(DATEDIFF(b.return_date, b.borrow_date)) AS avg_borrow_days,
+            COUNT(DISTINCT bc.category_id) AS different_categories_borrowed
+        FROM 
+            users u
+        JOIN 
+            borrows b ON u.user_id = b.user_id
+        JOIN 
+            books bk ON b.book_id = bk.book_id
+        JOIN 
+            book_categories bc ON bk.category_id = bc.category_id
+        WHERE 
+            u.role = 'student' AND b.return_date IS NOT NULL
+        GROUP BY 
+            u.user_id, u.full_name
+        ORDER BY 
+            total_borrows DESC
+        LIMIT 10;
+    """)
+    user_patterns = []
+    for row in c.fetchall():
+        user_patterns.append({
+            'user_id': row[0],
+            'full_name': row[1],
+            'total_borrows': row[2],
+            'avg_borrow_days': float(row[3]) if row[3] is not None else 0,
+            'different_categories': row[4]
+        })
+    
+    # 2. 类别借阅趋势分析
+    c.execute("""
+        SELECT 
+            bc.category_name,
+            COUNT(b.borrow_id) AS borrow_count,
+            COUNT(b.borrow_id) / (SELECT COUNT(*) FROM borrows) * 100 AS percentage_of_total
+        FROM 
+            book_categories bc
+        JOIN 
+            books bk ON bc.category_id = bk.category_id
+        JOIN 
+            borrows b ON bk.book_id = b.book_id
+        GROUP BY 
+            bc.category_name
+        ORDER BY 
+            borrow_count DESC;
+    """)
+    category_trends = []
+    for row in c.fetchall():
+        category_trends.append({
+            'category_name': row[0],
+            'borrow_count': row[1],
+            'percentage': float(row[2]) if row[2] is not None else 0
+        })
+    
+    # 3. 热门书籍和滞销书分析
+    c.execute("""
+        SELECT 
+            bk.book_id,
+            bk.title,
+            bk.author,
+            COUNT(b.borrow_id) AS borrow_count,
+            bk.copies,
+            COUNT(b.borrow_id) / bk.copies AS efficiency_ratio,
+            DATEDIFF(NOW(), MAX(b.borrow_date)) AS days_since_last_borrow
+        FROM 
+            books bk
+        LEFT JOIN 
+            borrows b ON bk.book_id = b.book_id
+        GROUP BY 
+            bk.book_id, bk.title, bk.author, bk.copies
+        ORDER BY 
+            efficiency_ratio DESC
+        LIMIT 15;
+    """)
+    book_popularity = []
+    for row in c.fetchall():
+        book_popularity.append({
+            'book_id': row[0],
+            'title': row[1],
+            'author': row[2],
+            'borrow_count': row[3],
+            'copies': row[4],
+            'efficiency_ratio': float(row[5]) if row[5] is not None else 0,
+            'days_since_last_borrow': row[6]
+        })
+    
+    # 5. 季节性借阅模式分析
+    c.execute("""
+        SELECT 
+            CASE 
+                WHEN MONTH(b.borrow_date) IN (12, 1, 2) THEN 'Winter'
+                WHEN MONTH(b.borrow_date) IN (3, 4, 5) THEN 'Spring'
+                WHEN MONTH(b.borrow_date) IN (6, 7, 8) THEN 'Summer'
+                WHEN MONTH(b.borrow_date) IN (9, 10, 11) THEN 'Fall'
+            END AS season,
+            bc.category_name,
+            COUNT(b.borrow_id) AS borrow_count
+        FROM 
+            borrows b
+        JOIN 
+            books bk ON b.book_id = bk.book_id
+        JOIN 
+            book_categories bc ON bk.category_id = bc.category_id
+        GROUP BY 
+            season, bc.category_name
+        ORDER BY 
+            season, borrow_count DESC;
+    """)
+    seasonal_patterns = []
+    seasons = {'Winter': [], 'Spring': [], 'Summer': [], 'Fall': []}
+    
+    for row in c.fetchall():
+        season = row[0]
+        if season not in seasons:
+            continue
+        
+        seasons[season].append({
+            'category': row[1],
+            'borrow_count': row[2]
+        })
+    
+    # 保留原有的图书统计功能，但改名为 book_stats
     c.execute("""
         SELECT 
             books.book_id AS book_id,
@@ -222,35 +365,35 @@ def usage():
         GROUP BY books.book_id, books.title
         ORDER BY borrow_count DESC, books.title ASC;
     """)
-    us = c.fetchall()
-
-    books = []
-    for u in us:
-        if u[3] is not None:
-            diff = datetime.datetime.now() - u[3]
+    books_stats = []
+    for book in c.fetchall():
+        if book[3] is not None:
+            diff = datetime.datetime.now() - book[3]
             
-            books.append(
-                {
-                    'book_id': u[0],
-                    'title': u[1],
-                    'total': u[2],
-                    'nearest': diff.days,
-                    'copies': u[4]
-                }
-            )
+            books_stats.append({
+                'book_id': book[0],
+                'title': book[1],
+                'total': book[2],
+                'nearest': diff.days,
+                'copies': book[4]
+            })
         else:
-            books.append(
-                {
-                    'book_id': u[0],
-                    'title': u[1],
-                    'total': u[2],
-                    'nearest': u[3],
-                    'copies': u[4]
-                }
-            )
+            books_stats.append({
+                'book_id': book[0],
+                'title': book[1],
+                'total': book[2],
+                'nearest': book[3],
+                'copies': book[4]
+            })
 
-
-    return render_template('librarian/usage.html', books=books)
+    return render_template(
+        'librarian/usage.html', 
+        books=books_stats, 
+        user_patterns=user_patterns,
+        category_trends=category_trends,
+        book_popularity=book_popularity,
+        seasonal_patterns=seasons
+    )
 
 @bp.route('/complaints', methods=['GET', 'POST'])
 @admin_login_required
@@ -427,8 +570,8 @@ def update_category(category_id):
     
     category_dict = {
         'category_id': category[0],
-        'category_name': category[1],
-        'category_description': category[2]
+        'name': category[1],
+        'description': category[2]
     }
     
     return render_template('librarian/update_category.html', category=category_dict)
@@ -439,33 +582,77 @@ def delete_category(category_id):
     db = get_db()
     c = db.cursor()
     
-    # 在删除前获取类别名称
+    # 获取类别信息
     c.execute('SELECT category_name FROM book_categories WHERE category_id = %s', (category_id,))
     category_data = c.fetchone()
     
     if category_data is None:
-        flash("Cannot find this category.")
+        flash("Cannot find this category")
         return redirect(url_for('librarian.categories'))
         
     category_name = category_data[0]
     
-    c.execute('SELECT COUNT(*) FROM books WHERE category_id = %s', (category_id,))
-    book_count = c.fetchone()[0]
+    # 查询属于此分类的所有图书
+    c.execute('SELECT book_id, title FROM books WHERE category_id = %s', (category_id,))
+    books = c.fetchall()
     
-    if book_count > 0:
-        flash(f"Cannot delete this category because there are {book_count} books belonging to this category.")
+    # 检查是否有未归还的借阅或预订
+    has_constraints = False
+    constraint_errors = []
+    
+    for book in books:
+        book_id = book[0]
+        
+        # 检查是否有未归还的借阅
+        c.execute('SELECT COUNT(*) FROM borrows WHERE book_id = %s AND return_date IS NULL', (book_id,))
+        active_borrows = c.fetchone()[0]
+        
+        # 检查是否有未处理的预订
+        c.execute('SELECT COUNT(*) FROM book_reservations WHERE book_id = %s AND status = "pending"', (book_id,))
+        active_reservations = c.fetchone()[0]
+        
+        if active_borrows > 0 or active_reservations > 0:
+            has_constraints = True
+            constraint_errors.append(f"Book '{book[1]}' has {active_borrows} unreturned borrow record and {active_reservations} unhandled reservations")
+    
+    if has_constraints:
+        error_message = "Cannot delete this category because following books have unreturned borrow record or unhandled reservations\n" + "\n".join(constraint_errors)
+        flash(error_message)
         return redirect(url_for('librarian.categories'))
     
     try:
+        # 开始删除操作
+        for book in books:
+            book_id = book[0]
+            book_title = book[1]
+            
+            # 删除相关记录
+            c.execute('DELETE FROM book_reservations WHERE book_id = %s', (book_id,))
+            c.execute('DELETE FROM borrows WHERE book_id = %s', (book_id,))
+            c.execute('DELETE FROM books WHERE book_id = %s', (book_id,))
+            
+            # 记录图书删除
+            log_action(g.user['user_id'], "Book Deleted (Category Delete)", "books", book_id, {
+                "title": book_title,
+                "category": category_name
+            })
+        
+        # 删除分类
         c.execute('DELETE FROM book_categories WHERE category_id = %s', (category_id,))
+        
+        # 提交更改
         db.commit()
         
-        log_action(g.user['user_id'], "Category Deleted", "categories", category_id, {
-            "name": category_name
+        # 记录分类删除
+        log_action(g.user['user_id'], "Category Deleted with Books", "categories", category_id, {
+            "name": category_name,
+            "books_deleted": len(books)
         })
-        flash('Category has been deleted successfully')
+        
+        flash(f'Category"{category_name}"and its {len(books)}books have been deleted successfully')
     except mysql.connector.Error as e:
-        flash(f'Category deletes fails:{e}')
+        db.rollback()
+        flash(f'Deletion fails{e}')
     
     return redirect(url_for('librarian.categories'))
 

@@ -48,7 +48,8 @@ CREATE TABLE borrows (
     borrow_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     due_date DATETIME NOT NULL,
     return_date DATETIME,
-    status ENUM('active', 'returned', 'overdue', 'lost') DEFAULT 'active',
+    status ENUM('active', 'returned', 'overdue', 'lost') 
+                DEFAULT 'active',
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (book_id) REFERENCES books(book_id),
     INDEX idx_borrows_user (user_id),
@@ -62,7 +63,8 @@ CREATE TABLE complaints (
     user_id INT NOT NULL,
     title VARCHAR(100) NOT NULL,
     content TEXT NOT NULL,
-    status ENUM('open', 'in_progress', 'resolved', 'closed') DEFAULT 'open',
+    status ENUM('open', 'in_progress', 'resolved', 'closed') 
+                DEFAULT 'open',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     resolved_at DATETIME,
     resolved_by INT,
@@ -80,7 +82,8 @@ CREATE TABLE book_reservations (
     book_id INT NOT NULL,
     reservation_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     expiry_date DATETIME NOT NULL,
-    status ENUM('pending', 'fulfilled', 'cancelled', 'expired') DEFAULT 'pending',
+    status ENUM('pending', 'fulfilled', 'cancelled', 'expired') 
+                DEFAULT 'pending',
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (book_id) REFERENCES books(book_id),
     INDEX idx_reservations_user (user_id),

@@ -16,7 +16,7 @@
         />
         <link
             rel="stylesheet"
-            href=" {{ url_for('static', filename='css/admin.css') }} "
+            href=" {{ url_for('static', filename='css/librarian.css') }} "
         />
     </head>
     <body class="bg-warning-subtle">
@@ -61,12 +61,6 @@
                     <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
                         <a href="{{ url_for('librarian.categories') }}" class="btn btn-info d-block custom-btn">
                             <h2>UPDATE CATEGORIES</h2>
-                        </a>
-                    </div>
-
-                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                        <a href="{{ url_for('librarian.inventory') }}" class="btn btn-success d-block custom-btn">
-                            <h2>INVENTORY</h2>
                         </a>
                     </div>
                     

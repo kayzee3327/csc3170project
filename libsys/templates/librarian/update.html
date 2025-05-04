@@ -16,7 +16,7 @@
         />
         <link
             rel="stylesheet"
-            href=" {{ url_for('static', filename='css/admin.css') }} "
+            href=" {{ url_for('static', filename='css/librarian.css') }} "
         />
     </head>
     <body class="bg-warning-subtle">
@@ -133,6 +133,17 @@
                                 value="{{ book['copies'] }}"
                                 required
                             />
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" name="category" id="category" required>
+                                {% for category in categories %}
+                                    <option value="{{ category.category_id }}" {% if category.category_id == book.category_id %}selected{% endif %}>
+                                        {{ category.category_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
                         </div>
 
                         <div class="col-12 d-flex justify-content-between">

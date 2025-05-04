@@ -16,7 +16,7 @@
         />
         <link
             rel="stylesheet"
-            href=" {{ url_for('static', filename='css/admin.css') }} "
+            href=" {{ url_for('static', filename='css/librarian.css') }} "
         />
     </head>
     <body class="bg-warning-subtle">
@@ -66,6 +66,14 @@
                     >
                         Add a New Item
                     </a>
+
+                    {% for message in get_flashed_messages() %}
+                    <div class="alert alert-warning alert-dismissible fade show mt-3 mb-3" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+
                     <div class="container">
                         {% for book in books %}
                         <div class="border-top pt-3 position-relative">
@@ -87,6 +95,9 @@
                             </p>
                             <p class="text-muted">
                                 Category:{{ book['category_name'] }}
+                            </p>
+                            <p class="text-muted">
+                                Total Borrows:{{ book['borrow_count'] }}
                             </p>
                             <form method="post">
                                 <input
@@ -125,6 +136,17 @@
                                     id="copies"
                                     value="{{ book['copies'] }}"
                                 />
+                                <input 
+                                    type="hidden" 
+                                    name="category_id" 
+                                    id="category_id" v
+                                    alue="{{ book['category_id'] }}" />
+                                <input 
+                                    type="hidden" 
+                                    name="category_name" 
+                                    id="category_name" 
+                                    value="{{ book['category_name'] }}" />
+
                                 <button
                                     type="submit"
                                     class="btn btn-warning position-absolute end-0 bottom-0"

@@ -109,4 +109,21 @@ button {
     animation: fadeIn 0.5s ease-out;
 }
 
+.custom-bg {
+    background: url("/static/img/lib_spring.jpg") no-repeat center center;
+    background-size: cover;
+    min-height: 100vh;
+}
+
+body.custom-bg::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: -1;
+}
+
 

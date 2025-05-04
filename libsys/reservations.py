@@ -75,7 +75,7 @@ def reserve(book_id):
     # Fetch book details for display
     c.execute(
         "SELECT books.*, book_categories.category_name FROM books LEFT JOIN book_categories "
-        "ON books.category_id = book_categories.category_id WHERE books.id = %s",
+        "ON books.category_id = book_categories.category_id WHERE books.book_id = %s",
         (book_id,)
     )
     book_details = c.fetchone()

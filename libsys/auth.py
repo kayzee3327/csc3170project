@@ -43,7 +43,7 @@ def register():
                 user_id = c.fetchone()[0]
                 log_action(None, "User Registration", "users", user_id, {
                     "username": username,
-                    "role": 'patron',
+                    "role": 'student',
                     "full_name": fullname,
                     "email": email
                 })

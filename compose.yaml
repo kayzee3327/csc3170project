@@ -5,6 +5,7 @@ services:
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD=1
       - MYSQL_DATABASE=library_management
+      - TZ=Asia/Shanghai 
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
@@ -28,6 +29,7 @@ services:
       - DB_PASSWORD=
       - DB_NAME=library_management
       - DB_PORT=3306
+      - TZ=Asia/Shanghai
     depends_on:
       db:
         condition: service_healthy

@@ -1,6 +1,25 @@
 -- Insert Complaints
 INSERT INTO complaints (user_id, title, content, status, created_at, resolved_at, resolved_by, reply) VALUES
-(3, 'Book Damaged', 'The book I borrowed is damaged.', 'open', '2025-4-05 13:00:00', NULL, NULL, NULL),  -- student 1 has an open complaint
-(5, 'No book', 'I couldn''t borrow the book I wanted.', 'resolved', '2025-4-06 12:00:00', '2025-4-06 14:00:00', 1, 'Sorry'),  -- student 3 has a resolved complaint solved by admin1
-(4, 'Delay', 'There was a delay in the book delivery.', 'open', '2025-4-07 09:00:00', NULL, NULL, NULL),  -- student 2 has an open complaint
-(4, 'System Failure', 'The library system is not functioning properly.', 'resolved', '2025-4-08 11:00:00', '2025-4-09 13:00:00', 2, 'Sorry');  -- student 2 has a resolved complaint solved by admin2
+(3, 'Book Condition Issue', 'I borrowed "Introduction to Algorithms" and found several pages with highlighting and annotations that make it difficult to read.', 'open', '2024-04-15 14:30:00', NULL, NULL, NULL),
+(4, 'Website Navigation Problem', 'I am having trouble finding books in the Computer Graphics category using the online catalog. The search feature seems broken.', 'open', '2024-04-16 10:15:00', NULL, NULL, NULL),
+(5, 'Reservation System Error', 'I tried to reserve "Cloud Computing Architecture" but received an error message. The system shows copies are available but won\'t let me reserve.', 'open', '2024-04-17 16:45:00', NULL, NULL, NULL),
+(6, 'Wrong Due Date', 'My receipt shows a different due date than what appears in my online account for "Mobile App Development with Flutter".', 'open', '2024-04-18 11:20:00', NULL, NULL, NULL),
+(7, 'Missing Appendix', 'The book "Data Science for Business" is missing the appendix containing important reference tables mentioned in Chapter 8.', 'open', '2024-04-19 15:30:00', NULL, NULL, NULL),
+
+-- In progress complaints
+(3, 'Overdue Fine Dispute', 'I returned "Artificial Intelligence: A Modern Approach" on time but was still charged an overdue fine.', 'in_progress', '2024-04-10 09:45:00', NULL, NULL, NULL),
+(4, 'Noisy Study Area', 'The third floor study area has been extremely noisy for the past week, making it difficult to concentrate.', 'in_progress', '2024-04-11 13:20:00', NULL, NULL, NULL),
+
+-- Resolved complaints
+(5, 'Login Problems', 'I cannot log into my library account. It keeps saying "invalid credentials" even though I\'m sure my password is correct.', 'resolved', '2024-04-01 10:30:00', '2024-04-02 14:15:00', 1, 'We have reset your password. Please check your email for instructions to set a new password. Let us know if you encounter any further issues.'),
+(6, 'Reservation Cancellation', 'My reservation for "Deep Learning for Computer Vision" was cancelled without notification.', 'resolved', '2024-04-02 16:20:00', '2024-04-03 11:45:00', 2, 'We apologize for the inconvenience. Your reservation was accidentally cancelled during system maintenance. We have placed a new reservation for you with priority status.'),
+(7, 'Extended Hours Request', 'Could the library extend opening hours during final exam weeks? Current hours are too limited.', 'resolved', '2024-04-03 14:50:00', '2024-04-05 09:30:00', 1, 'Thank you for your suggestion. We will extend library hours from 7am to midnight during the final exam period starting next week.'),
+(3, 'Book Recommendation', 'Can you add more books on React and modern JavaScript frameworks?', 'resolved', '2024-04-04 11:15:00', '2024-04-06 15:40:00', 2, 'Thanks for your recommendation. We have ordered 5 new titles on React, Next.js, and modern JavaScript frameworks that should arrive within two weeks.'),
+(4, 'Printer Issue', 'The printer on the second floor has been out of paper for three days.', 'resolved', '2024-04-05 13:25:00', '2024-04-06 10:20:00', 1, 'Thank you for reporting this issue. The printer has been restocked with paper and is now working properly. We\'ve also added a QR code on the printer for direct reporting of similar issues in the future.'),
+
+-- Closed complaints
+(5, 'WiFi Connectivity', 'The WiFi signal is very weak in the basement study rooms.', 'closed', '2024-03-15 15:30:00', '2024-03-20 11:45:00', 2, 'We have installed additional WiFi access points in the basement area. The signal strength should now be significantly improved.'),
+(6, 'Outdated Reference Books', 'Many of the programming reference books are severely outdated (some from 2010 or earlier).', 'closed', '2024-03-18 10:20:00', '2024-03-25 14:30:00', 1, 'Thank you for bringing this to our attention. We have allocated budget for updating our programming reference collection and have ordered 25 new titles covering the latest technologies and frameworks.'),
+(7, 'Group Study Room Availability', 'It\'s nearly impossible to book a group study room less than a week in advance.', 'closed', '2024-03-22 16:15:00', '2024-03-28 09:50:00', 2, 'We have adjusted our booking policy to limit reservations to 2 hours per group per day, which should increase availability. We\'re also converting two additional spaces into group study rooms next month.'),
+(3, 'Heating Issue', 'The reading room on the fourth floor is too cold in the mornings.', 'closed', '2024-03-25 09:10:00', '2024-03-30 13:40:00', 1, 'We have adjusted the heating schedule to start warming the fourth floor two hours earlier each morning. The temperature should now be comfortable throughout the day.'),
+(4, 'Book Return Slot Jammed', 'The external book return slot appears to be jammed and isn\'t accepting returns.', 'closed', '2024-03-28 17:45:00', '2024-04-01 10:15:00', 2, 'The book return slot has been repaired and is now functioning properly. Thank you for reporting this issue.');

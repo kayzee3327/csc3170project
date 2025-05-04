@@ -20,7 +20,7 @@
         />
         <link
             rel="stylesheet"
-            href=" {{ url_for('static', filename='css/patron.css') }} "
+            href=" {{ url_for('static', filename='css/student.css') }} "
         />
     </head>
     <body class="custom-bg">
@@ -44,7 +44,7 @@
                     </li>
                     {% endif %}
                     <li>
-                        
+                        <a
                             class="btn btn-outline-dark"
                             href="{{ url_for('auth.logout') }}"
                         >

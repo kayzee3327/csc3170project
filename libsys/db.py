@@ -47,6 +47,7 @@ def init_db():
     execute_sql_file(c, 'sql/books.sql')
     execute_sql_file(c, 'sql/borrows.sql')
     execute_sql_file(c, 'sql/complaints.sql')
+    execute_sql_file(c, 'sql/systen_logs.sql')
     db.commit()
 
 @click.command('init-db')
